@@ -3,6 +3,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { getBanner } from "../../utils/getBanner";
 import { LuImageDown } from "react-icons/lu";
 import { uploadBanner } from "../../services/userService";
+import UsernameAndAvatarSection from "./UsernameAndAvatarSection";
 
 const InfoSectionProfile = () => {
   const { user, setUser, setLoading } = useAuth();
@@ -14,7 +15,7 @@ const InfoSectionProfile = () => {
     setLoading(true);
     try {
       const bannerURL = await uploadBanner(file);
-      setUser((prev) => (prev ? { ...prev, banner: bannerURL.url } : prev));
+      setUser((prev) => (prev ? { ...prev, banner: bannerURL } : prev));
     } catch (error) {
       console.error(error);
     } finally {
@@ -46,6 +47,7 @@ const InfoSectionProfile = () => {
       >
         <LuImageDown />
       </label>
+      <UsernameAndAvatarSection />
     </div>
   );
 };

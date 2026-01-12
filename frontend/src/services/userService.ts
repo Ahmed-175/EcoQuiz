@@ -29,16 +29,16 @@ export const updateProfile = async (
 };
 
 // Upload avatar
-export const uploadAvatar = async (file: File): Promise<{ url: string }> => {
+export const uploadAvatar = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append("avatar", file);
-  const response = await api.post("/users/me/avatar", formData, {
+  const response = await api.put("/users/me/avatar", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return response.data.data;
+  return response.data.avatar;
 };
 
-export const uploadBanner = async (file: File): Promise<{ url: string }> => {
+export const uploadBanner = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append("banner", file);
   const response = await api.put("/users/me/banner", formData, {
