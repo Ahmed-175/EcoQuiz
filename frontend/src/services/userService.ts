@@ -1,62 +1,65 @@
-import api from '../api/api';
-import type { User, UserQuizStats, QuizAttempt, ApiResponse } from '../types/types';
+import api from "../api/api";
+import type {
+  User,
+  UserQuizStats,
+  QuizAttempt,
+  ApiResponse,
+} from "../types/types";
 
 // Get current user profile
 export const getUserProfile = async (): Promise<User> => {
-    const response = await api.get('/users/me');
-    return response.data.res;
+  const response = await api.get("/users/me");
+  return response.data.res;
 };
 
 // Get user by ID
 export const getUserById = async (id: string): Promise<User> => {
-    const response = await api.get(`/users/${id}`);
-    return response.data.data;
+  const response = await api.get(`/users/${id}`);
+  return response.data.data;
 };
 
 // Update user profile
 export const updateProfile = async (
-    username?: string,
-    avatar?: string,
-    banner?: string
+  username?: string,
+  avatar?: string,
+  banner?: string
 ): Promise<User> => {
-    const response = await api.put('/users/me', { username, avatar, banner });
-    return response.data.data;
+  const response = await api.put("/users/me", { username, avatar, banner });
+  return response.data.data;
 };
 
 // Upload avatar
 export const uploadAvatar = async (file: File): Promise<{ url: string }> => {
-    const formData = new FormData();
-    formData.append('avatar', file);
-    const response = await api.post('/users/me/avatar', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data.data;
+  const formData = new FormData();
+  formData.append("avatar", file);
+  const response = await api.post("/users/me/avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data.data;
 };
 
-// Upload banner
 export const uploadBanner = async (file: File): Promise<{ url: string }> => {
-    const formData = new FormData();
-    formData.append('banner', file);
-    const response = await api.post('/users/me/banner', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data.data;
+  const formData = new FormData();
+  formData.append("banner", file);
+  const response = await api.put("/users/me/banner", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data.banner;
 };
 
-// Get user stats
 export const getUserStats = async (userId: string): Promise<UserQuizStats> => {
-    const response = await api.get(`/users/${userId}/stats`);
-    return response.data.data;
+  const response = await api.get(`/users/${userId}/stats`);
+  return response.data.data;
 };
 
-// Get user quiz attempts
-export const getUserAttempts = async (userId: string): Promise<QuizAttempt[]> => {
-    const response = await api.get(`/users/${userId}/attempts`);
-    return response.data.data;
+export const getUserAttempts = async (
+  userId: string
+): Promise<QuizAttempt[]> => {
+  const response = await api.get(`/users/${userId}/attempts`);
+  return response.data.data;
 };
 
-// Logout
 export const logout = async (): Promise<ApiResponse<null>> => {
-    const response = await api.post('/auth/logout');
-    return response.data;
+  const response = await api.post("/auth/logout");
+  return response.data;
 };

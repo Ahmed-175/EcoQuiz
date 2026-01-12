@@ -37,7 +37,9 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowCredentials: true,
+		AllowMethods:     []string{"GET", "POST", "DELETE", "PUT"},
 	}))
+	r.Static("/api/uploads", "./uploads")
 
 	routes.SetupRoutes(r, authHandler, userHandler, cfg.JwtSecret)
 

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import type { User } from "../types/types";
+import { baseUrl } from "../utils/baseUrl";
 
 interface AvatarProps {
   user: User;
@@ -20,6 +21,7 @@ const Avatar: React.FC<AvatarProps> = ({
   border = false,
   status,
 }) => {
+  const [avatar, setAvatar] = useState(`${baseUrl}${user.avatar}`);
   const sizeConfig = {
     xs: { container: "w-6 h-6", text: "text-xs", status: "w-1.5 h-1.5" },
     sm: { container: "w-8 h-8", text: "text-sm", status: "w-2 h-2" },
@@ -44,6 +46,8 @@ const Avatar: React.FC<AvatarProps> = ({
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
   };
+
+  console.log(avatar);
 
   const getInitials = () => {
     if (user.username) {
@@ -87,8 +91,9 @@ const Avatar: React.FC<AvatarProps> = ({
       )}
 
       <div
-        className={`relative ${config.container
-          } rounded-full flex items-center justify-center cursor-pointer 
+        className={`relative ${
+          config.container
+        } rounded-full flex items-center justify-center cursor-pointer 
           ${border ? "ring-2 ring-white dark:ring-gray-800" : ""}
           ${onClick ? "hover:shadow-lg hover:scale-105" : ""}
           transition-all duration-200 ${className} group`}
@@ -96,7 +101,8 @@ const Avatar: React.FC<AvatarProps> = ({
       >
         {user.avatar ? (
           <img
-            src={user.avatar}
+            // src={`${import.meta.env.VITE_API_BASE_URL}/${user.avatar}`}
+            src={avatar}
             alt={getDisplayName()}
             className="w-full h-full rounded-full object-cover"
             loading="lazy"
@@ -111,8 +117,9 @@ const Avatar: React.FC<AvatarProps> = ({
 
         {status && (
           <div
-            className={`absolute bottom-0 right-0 ${config.status
-              } rounded-full ${getStatusColor()} ring-2 ring-white dark:ring-gray-800`}
+            className={`absolute bottom-0 right-0 ${
+              config.status
+            } rounded-full ${getStatusColor()} ring-2 ring-white dark:ring-gray-800`}
           ></div>
         )}
       </div>

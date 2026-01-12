@@ -12,6 +12,8 @@ type UserRepo interface {
 	FindByID(ctx context.Context, userID string) (*models.User, error)
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
 	Update(ctx context.Context, avater string, banner string, username string, userID string) error
+	UpdateAvatar(ctx context.Context, avatar string, userID string) error
+	UpdateBanner(ctx context.Context, banner string, userID string) error
 }
 
 type userRepo struct {
@@ -105,5 +107,25 @@ func (r *userRepo) Update(ctx context.Context, avater string, banner string, use
 	WHERE id = $4
 	`
 	_, err := r.db.Exec(ctx, query, avater, banner, username, userID)
+	return err
+}
+
+func (r *userRepo) UpdateAvatar(ctx context.Context, avatar string, userID string) error {
+	query := `
+		UPDATE users
+		SET avatar = $1
+		WHERE id = $2
+	`
+	_, err := r.db.Exec(ctx, query, avatar, userID)
+	return err
+}
+
+func (r *userRepo) UpdateBanner(ctx context.Context, banner string, userID string) error {
+	query := `
+		UPDATE users
+		SET banner = $1
+		WHERE id = $2
+	`
+	_, err := r.db.Exec(ctx, query, banner, userID)
 	return err
 }

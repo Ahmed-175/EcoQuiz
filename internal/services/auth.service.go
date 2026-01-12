@@ -31,9 +31,7 @@ func (s *AuthService) GoogleHandle(ctx context.Context, claims jwt.MapClaims) (s
 			user = &models.User{
 				Username: claims["name"].(string),
 				Email:    email,
-				GoogleID: claims["sub"].(string),
-				Avatar:   claims["picture"].(string),
-			}
+				GoogleID: claims["sub"].(string)}
 			err := s.userRepo.Create(ctx, user)
 			if err != nil {
 				return "", err

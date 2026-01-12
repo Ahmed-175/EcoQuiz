@@ -13,5 +13,7 @@ func UserRoutes(rg *gin.RouterGroup, userHandler *handlers.UserHandler, jwtSecre
 	{
 		users.GET("/me", userHandler.Profile)
 		users.PUT("/me", userHandler.UpdateUser)
+		users.PUT("/me/avatar", userHandler.UpdateAvatar)
+		users.PUT("/me/banner", userHandler.UpdateBanner)
 	}
 }
