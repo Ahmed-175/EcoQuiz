@@ -4,6 +4,7 @@ import (
 	"context"
 	dto_community "ecoquiz/internal/dto/community"
 	"ecoquiz/internal/repos"
+	"ecoquiz/internal/utils"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -39,4 +40,12 @@ func (s *CommunityService) CreateCommunity(ctx context.Context, req *dto_communi
 		return "", errors.New("Failed to add user as member to community" + err.Error())
 	}
 	return comm.ID, nil
+}
+
+func (s *CommunityService) GetAllCommunities(ctx context.Context) (*dto_community.GetAllCommunitiesRes, error) {
+	comms, err := s.communityRepo.FindAll(ctx)
+	if err != nil {
+		return nil, errors.New("failed to get communities: " + err.Error())
+	}
+	return utils.TransformTime(comms), nil
 }

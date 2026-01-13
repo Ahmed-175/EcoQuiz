@@ -12,6 +12,7 @@ import (
 type CommunityRepo interface {
 	Create(ctx context.Context, comm *models.Community) error
 	FindByID(ctx context.Context, id string) (*models.Community, error)
+	FindAll(ctx context.Context) ([]*models.Community, error)
 	FindByCreatorID(ctx context.Context, creatorID string) ([]models.Community, error)
 	DeleteCommunityByID(ctx context.Context, commID string) error
 	UpdateCommunity(ctx context.Context, comm *models.Community) error
@@ -55,6 +56,52 @@ func (r *communityRepo) Create(ctx context.Context, comm *models.Community) erro
 		comm.CreatorID,
 		comm.AllowPublicQuizSubmission,
 	).Scan(&comm.ID, &comm.CreatedAt, &comm.UpdatedAt)
+}
+func (r *communityRepo) FindAll(ctx context.Context) ([]*models.Community, error) {
+	query := `
+	  SELECT 
+	    id, 
+	    name, 
+	    description, 
+	    banner, 
+	    creator_id, 
+	    allow_public_quiz_submission,
+	    created_at, 
+	    updated_at  
+	  FROM communities;
+	`
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, errors.New("failed to get all communities: " + err.Error())
+	}
+	defer rows.Close()
+
+	var communities []*models.Community
+
+	for rows.Next() {
+		comm := &models.Community{}
+		if err := rows.Scan(
+			&comm.ID,
+			&comm.Name,
+			&comm.Description,
+			&comm.Banner,
+			&comm.CreatorID,
+			&comm.AllowPublicQuizSubmission,
+			&comm.CreatedAt,
+			&comm.UpdatedAt,
+		); err != nil {
+			return nil, errors.New("failed to scan community: " + err.Error())
+		}
+
+		communities = append(communities, comm)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.New("rows iteration error: " + err.Error())
+	}
+
+	return communities, nil
 }
 
 func (r *communityRepo) FindByID(ctx context.Context, id string) (*models.Community, error) {

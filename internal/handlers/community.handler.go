@@ -35,3 +35,16 @@ func (h *CommunityHandler) CreateCommunity(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"community_id": commID})
 }
+
+func (h *CommunityHandler) GetAllCommunities(c *gin.Context) {
+
+	res, err := h.communityService.GetAllCommunities(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch communities: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
