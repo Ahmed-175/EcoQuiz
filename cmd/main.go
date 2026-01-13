@@ -25,13 +25,16 @@ func main() {
 	fmt.Println("Database Connected!")
 
 	userRepo := repos.NewUserRepo(pool)
+	communityRepo := repos.NewCommunityRepo(pool)
 
 	authService := services.NewAuthService(userRepo, cfg.JwtSecret)
 	userService := services.NewUserService(userRepo)
 	oauthCfg := utils.GoogleConfig(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
+	communityService := services.NewCommunityService(communityRepo, userRepo)
 
 	authHandler := handlers.NewAuthHandler(*authService, oauthCfg, cfg.ClientURL)
 	userHandler := handlers.NewUserHandler(*userService)
+	communityHandler := handlers.NewCommunityHandler(*communityService)
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -41,7 +44,7 @@ func main() {
 	}))
 	r.Static("/api/uploads", "./uploads")
 
-	routes.SetupRoutes(r, authHandler, userHandler, cfg.JwtSecret)
+	routes.SetupRoutes(r, authHandler, userHandler, communityHandler, cfg.JwtSecret)
 
 	r.Run(":" + cfg.Port)
 }

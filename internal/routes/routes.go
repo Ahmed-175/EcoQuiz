@@ -6,12 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(router *gin.Engine, 
+func SetupRoutes(router *gin.Engine,
 	authHandler *handlers.AuthHandler,
 	userHandler *handlers.UserHandler,
-	jwtsecret string , 
-	) {
+	communityHandler *handlers.CommunityHandler,
+	jwtsecret string,
+) {
 	api := router.Group("/api")
 	AuthRoutes(api, authHandler)
-	UserRoutes(api ,userHandler , jwtsecret)
+	UserRoutes(api, userHandler, jwtsecret)
+	CommunityRoutes(api, communityHandler, jwtsecret)
 }
