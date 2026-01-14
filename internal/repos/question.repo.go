@@ -12,7 +12,7 @@ import (
 )
 
 type QuestionRepo interface {
-	Create(ctx context.Context, question *models.Question) error
+	CreateBatchTx(ctx context.Context, questions []models.Question, tx pgx.Tx) error
 	GetByID(ctx context.Context, id string) (*models.Question, error)
 	Update(ctx context.Context, question *models.Question) error
 	Delete(ctx context.Context, id string) error
@@ -27,7 +27,11 @@ func NewQuestionRepo(db *pgxpool.Pool) QuestionRepo {
 	return &questionRepo{db: db}
 }
 
-func (r *questionRepo) Create(ctx context.Context, question *models.Question) error {
+func (r *questionRepo) CreateBatchTx(ctx context.Context, questions []models.Question, tx pgx.Tx) error {
+	if len(questions) == 0 {
+		return nil
+	}
+
 	query := `
 		INSERT INTO questions (
 			quiz_id,
@@ -40,15 +44,31 @@ func (r *questionRepo) Create(ctx context.Context, question *models.Question) er
 		RETURNING id, created_at, updated_at
 	`
 
-	err := r.db.QueryRow(ctx, query,
-		question.QuizID,
-		question.QuestionText,
-		question.Explanation,
-		question.CorrectAnswer,
-		question.OrderIndex,
-	).Scan(&question.ID, &question.CreatedAt, &question.UpdatedAt)
+	batch := &pgx.Batch{}
 
-	return err
+	for i := range questions {
+		q := &questions[i]
+		batch.Queue(query,
+			q.QuizID,
+			q.QuestionText,
+			q.Explanation,
+			q.CorrectAnswer,
+			q.OrderIndex,
+		)
+	}
+
+	br := tx.SendBatch(ctx, batch)
+	defer br.Close()
+
+	for i := range questions {
+		q := &questions[i]
+		err := br.QueryRow().Scan(&q.ID, &q.CreatedAt, &q.UpdatedAt)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *questionRepo) GetByID(ctx context.Context, id string) (*models.Question, error) {

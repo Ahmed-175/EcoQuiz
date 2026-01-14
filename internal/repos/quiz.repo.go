@@ -7,15 +7,17 @@ import (
 
 	"ecoquiz/internal/models"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type QuizRepo interface {
-	Create(ctx context.Context, quiz *models.Quiz) error
+	CreateTx(ctx context.Context, quiz *models.Quiz, tx pgx.Tx) error
 	FindByID(ctx context.Context, id string) (*models.Quiz, error)
 	Update(ctx context.Context, quiz *models.Quiz) error
 	Delete(ctx context.Context, id string) error
 	FindByCommunityID(ctx context.Context, communityID string) ([]*models.Quiz, error)
+	BeginTx(ctx context.Context) (pgx.Tx, error)
 }
 
 type quizRepo struct {
@@ -25,8 +27,10 @@ type quizRepo struct {
 func NewQuizRepo(db *pgxpool.Pool) QuizRepo {
 	return &quizRepo{db: db}
 }
-
-func (r *quizRepo) Create(ctx context.Context, quiz *models.Quiz) error {
+func (r *quizRepo) BeginTx(ctx context.Context) (pgx.Tx, error) {
+	return r.db.BeginTx(ctx, pgx.TxOptions{})
+}
+func (r *quizRepo) CreateTx(ctx context.Context, quiz *models.Quiz, tx pgx.Tx) error {
 	query := `
 		INSERT INTO quizzes (
 			community_id,
@@ -41,7 +45,7 @@ func (r *quizRepo) Create(ctx context.Context, quiz *models.Quiz) error {
 		RETURNING id, created_at, updated_at
 	`
 
-	err := r.db.QueryRow(ctx, query,
+	err := tx.QueryRow(ctx, query,
 		quiz.CommunityID,
 		quiz.CreatorID,
 		quiz.Title,

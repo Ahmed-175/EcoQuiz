@@ -11,7 +11,7 @@ import (
 )
 
 type OptionRepo interface {
-	Create(ctx context.Context, options []models.Option) error
+	CreateBatchTx(ctx context.Context, options []models.Option, tx pgx.Tx) error
 	GetByQuestionID(ctx context.Context, questionID string) ([]models.Option, error)
 	Update(ctx context.Context, options []models.Option) error
 	DeleteByQuestionID(ctx context.Context, questionID string) error
@@ -25,7 +25,7 @@ func NewOptionRepo(db *pgxpool.Pool) OptionRepo {
 	return &optionRepo{db: db}
 }
 
-func (r *optionRepo) Create(ctx context.Context, options []models.Option) error {
+func (r *optionRepo) CreateBatchTx(ctx context.Context, options []models.Option, tx pgx.Tx) error {
 	if len(options) == 0 {
 		return nil
 	}
@@ -49,7 +49,7 @@ func (r *optionRepo) Create(ctx context.Context, options []models.Option) error 
 		)
 	}
 
-	br := r.db.SendBatch(ctx, batch)
+	br := tx.SendBatch(ctx, batch)
 	defer br.Close()
 
 	for range options {

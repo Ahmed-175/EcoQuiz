@@ -26,15 +26,21 @@ func main() {
 
 	userRepo := repos.NewUserRepo(pool)
 	communityRepo := repos.NewCommunityRepo(pool)
+	quizRepo := repos.NewQuizRepo(pool)
+	questionRepo := repos.NewQuestionRepo(pool)
+	optionRepo := repos.NewOptionRepo(pool)
 
 	authService := services.NewAuthService(userRepo, cfg.JwtSecret)
 	userService := services.NewUserService(userRepo)
 	oauthCfg := utils.GoogleConfig(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
 	communityService := services.NewCommunityService(communityRepo, userRepo)
+	quizService := services.NewQuizService(quizRepo, questionRepo, optionRepo,userRepo, communityRepo)
+
 
 	authHandler := handlers.NewAuthHandler(*authService, oauthCfg, cfg.ClientURL)
 	userHandler := handlers.NewUserHandler(*userService)
 	communityHandler := handlers.NewCommunityHandler(*communityService)
+	quizHandler := handlers.NewQuizHandler(*quizService)
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -44,7 +50,14 @@ func main() {
 	}))
 	r.Static("/api/uploads", "./uploads")
 
-	routes.SetupRoutes(r, authHandler, userHandler, communityHandler, cfg.JwtSecret)
+	routes.SetupRoutes(
+		r,
+		authHandler,
+		userHandler,
+	    communityHandler,
+		quizHandler, 
+		cfg.JwtSecret,
+	)
 
 	r.Run(":" + cfg.Port)
 }
