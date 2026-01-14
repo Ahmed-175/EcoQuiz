@@ -6,9 +6,7 @@ import Profile from "./pages/Profile";
 import Results from "./pages/quiz/Results";
 import Take from "./pages/quiz/Take";
 import Quiz from "./pages/quiz/Quiz";
-import Leaderboard from "./pages/quiz/Leaderboard";
 import CreateCommunity from "./pages/community/CreateCommunity";
-import CreateQuiz from "./pages/quiz/CreateQuiz";
 import Settings from "./pages/community/Settings";
 import Community from "./pages/community/Community";
 import Header from "./components/header/Header";
@@ -18,6 +16,7 @@ import PublicRoute from "./routes/PublicRoute";
 import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { getUserProfile } from "./services/userService";
+import CreateQuiz from "./pages/quiz/CreateQuiz";
 
 const App = () => {
   const { setUser, setLoading } = useAuth();
@@ -106,11 +105,6 @@ const App = () => {
               <Results />
             </ProtectedRoute>
           }
-        />
-
-        <Route
-          path="/quiz/:id/leaderboard"
-          element={<Leaderboard />}
         />
 
         <Route

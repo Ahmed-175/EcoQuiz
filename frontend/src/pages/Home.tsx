@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiPlus, FiTrendingUp, FiUsers, FiArrowRight } from 'react-icons/fi';
+import { FiPlus, FiUsers } from 'react-icons/fi';
 import { useAuth } from '../hooks/useAuth';
 import Loading from '../components/Loading';
-import Button from '../components/ui/Button';
-import QuizCard from '../components/quiz/QuizCard';
-import CommunityCard from '../components/community/CommunityCard';
+
 import type { Quiz, Community } from '../types/types';
 import { getRecommendedQuizzes, getTrendingQuizzes } from '../services/quizService';
 import { getRecommendedCommunities } from '../services/communityService';

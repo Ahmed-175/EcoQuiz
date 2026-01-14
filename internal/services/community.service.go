@@ -49,3 +49,23 @@ func (s *CommunityService) GetAllCommunities(ctx context.Context) (*dto_communit
 	}
 	return utils.TransformTime(comms), nil
 }
+
+func (s *CommunityService) GetCommunityByID(
+	ctx context.Context,
+	commID string,
+) (*dto_community.GetCommunityByIDRes, error) {
+
+	comm, err := s.communityRepo.FindByID(ctx, commID)
+	if err == pgx.ErrNoRows {
+		return nil, errors.New("community does not exist")
+	}
+	if err != nil {
+		return nil, errors.New("failed to get community")
+	}
+
+	res := &dto_community.GetCommunityByIDRes{
+		Community: *utils.TransformSingleCommunity(comm),
+	}
+
+	return res, nil
+}

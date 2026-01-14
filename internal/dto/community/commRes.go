@@ -11,6 +11,23 @@ type Community struct {
 	UpdatedAt                 string `json:"updated_at"`
 }
 
+type Member struct {
+	ID       string  `json:"id"`
+	Username string  `json:"username"`
+	Avatar   *string `json:"avatar"`
+	Email    string  `json:"email"`
+}
+type Quiz struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
 type GetAllCommunitiesRes struct {
 	Communities *[]Community `json:"communities"`
+}
+
+type GetCommunityByIDRes struct {
+	Community Community `json:"community"`
+	Members   *[]Member `json:"member"`
+	Quizzes   *[]Quiz   `json:"quizzes"`
 }

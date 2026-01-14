@@ -18,6 +18,7 @@ func NewCommunityHandler(communityService services.CommunityService) *CommunityH
 	}
 }
 
+
 func (h *CommunityHandler) CreateCommunity(c *gin.Context) {
 	userID := c.GetString("userID")
 	var req dto_community.CreateCommunityReq
@@ -42,6 +43,29 @@ func (h *CommunityHandler) GetAllCommunities(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch communities: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *CommunityHandler) GetCommunityByID(c *gin.Context) {
+	commID := c.Param("id")
+	if commID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "community id is required",
+		})
+		return
+	}
+
+	res, err := h.communityService.GetCommunityByID(
+		c.Request.Context(),
+		commID,
+	)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
