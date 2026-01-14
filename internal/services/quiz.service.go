@@ -6,6 +6,7 @@ import (
 	dto_quiz "ecoquiz/internal/dto/quiz"
 	"ecoquiz/internal/models"
 	"ecoquiz/internal/repos"
+	"ecoquiz/internal/utils"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -23,14 +24,14 @@ func NewQuizService(
 	quizRepo repos.QuizRepo,
 	questionRepo repos.QuestionRepo,
 	optionRepo repos.OptionRepo,
-	userRepo      repos.UserRepo,
+	userRepo repos.UserRepo,
 	communityRepo repos.CommunityRepo,
 ) *QuizService {
 	return &QuizService{
 		quizRepo:      quizRepo,
 		questionRepo:  questionRepo,
 		optionRepo:    optionRepo,
-		userRepo: userRepo,
+		userRepo:      userRepo,
 		communityRepo: communityRepo,
 	}
 }
@@ -109,4 +110,81 @@ func (s *QuizService) CreateQuiz(
 		return "", errors.New("Failed to commit transaction")
 	}
 	return quiz.ID, nil
+}
+func (s *QuizService) GetAllQuizzes(
+	ctx context.Context,
+	userID string,
+) ([]dto_quiz.QuizResponse, error) {
+
+	quizzes, err := s.quizRepo.GetAllQuizzes(ctx)
+	if err != nil {
+		return nil, errors.New("failed to get quizzes: " + err.Error())
+	}
+
+	quizzesResponse := make([]dto_quiz.QuizResponse, 0, len(quizzes))
+
+	for _, quiz := range quizzes {
+		var quizRes dto_quiz.QuizResponse
+
+		quizRes.ID = quiz.ID
+		quizRes.Title = quiz.Title
+		quizRes.Description = quiz.Description
+		quizRes.DurationMinutes = quiz.DurationMinutes
+		quizRes.LikesCount = quiz.LikesCount
+		quizRes.AverageScore = quiz.AverageScore
+		quizRes.StudentsCount = quiz.StudentsCount
+		quizRes.CreatedAt = utils.FormatTime(quiz.CreatedAt)
+
+		if utils.IsNew(quiz.CreatedAt) {
+			quizRes.IsNew = true
+		} else {
+			quizRes.IsNew = false
+		}
+
+		community, err := s.communityRepo.FindByID(ctx, quiz.CommunityID)
+		if err != nil {
+			return nil, errors.New("failed to get community")
+		}
+
+		quizRes.Community = dto_quiz.Community{
+			ID:     community.ID,
+			Name:   community.Name,
+			Banner: &community.Banner.String,
+		}
+
+		if userID == community.CreatorID {
+			quizRes.Community.IsJoined = "CREATOR"
+		} else {
+			role, err := s.communityRepo.UserRole(ctx, userID, community.ID)
+			if err != nil {
+				if err == pgx.ErrNoRows {
+					quizRes.Community.IsJoined = "NOT_JOINED"
+				} else {
+					return nil, errors.New("failed to check community membership")
+				}
+			} else {
+				if role == "creator" {
+					quizRes.Community.IsJoined = "CREATOR"
+				} else {
+					quizRes.Community.IsJoined = "JOINED"
+				}
+			}
+		}
+
+		creator, err := s.userRepo.FindByID(ctx, quiz.CreatorID)
+		if err != nil {
+			return nil, errors.New("failed to get creator")
+		}
+
+		quizRes.Creator = dto_quiz.Creator{
+			ID:       creator.ID,
+			Username: creator.Username,
+			Email:    creator.Email,
+			Avatar:   creator.Avatar,
+		}
+
+		quizzesResponse = append(quizzesResponse, quizRes)
+	}
+
+	return quizzesResponse, nil
 }

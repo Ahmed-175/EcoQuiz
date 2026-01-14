@@ -16,6 +16,7 @@ type CommunityRepo interface {
 	FindByCreatorID(ctx context.Context, creatorID string) ([]models.Community, error)
 	DeleteCommunityByID(ctx context.Context, commID string) error
 	UpdateCommunity(ctx context.Context, comm *models.Community) error
+	UserRole(ctx context.Context, commID, userID string) (string, error)
 
 	AddMember(ctx context.Context, commID, userID, role string) error
 	RemoveMember(ctx context.Context, commID, userID string) error
@@ -305,4 +306,22 @@ func (r *communityRepo) FindMembersByRoles(ctx context.Context, commID string, r
 	}
 
 	return users, nil
+}
+
+func (r *communityRepo) UserRole(
+	ctx context.Context,
+	commID, userID string,
+) (string, error) {
+
+	query := `
+		SELECT role FROM community_members
+		WHERE community_id = $1 AND user_id = $2
+	`
+	var role string
+	err := r.db.QueryRow(ctx, query, commID, userID).Scan(&role)
+	if err != nil {
+		return "", err
+	}
+
+	return role, nil
 }

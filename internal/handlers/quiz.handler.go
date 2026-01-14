@@ -36,3 +36,18 @@ func (h *QuizHandler) CreateQuiz(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, gin.H{"quiz_id": quizId})
 }
+
+func (h *QuizHandler) GetAllQuizzes(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unauthorized"})
+		return
+	}
+	quizzes, err := h.quizService.GetAllQuizzes(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"quizzes": quizzes})
+}

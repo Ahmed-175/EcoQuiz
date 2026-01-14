@@ -12,5 +12,6 @@ func QuizRoutes(api *gin.RouterGroup, quizHandler *handlers.QuizHandler, jwtsecr
 	quizGroup.Use(middleware.JWTAuth(jwtsecret))
 	{
 		quizGroup.POST("/", quizHandler.CreateQuiz)
+		quizGroup.GET("/", quizHandler.GetAllQuizzes)
 	}
 }

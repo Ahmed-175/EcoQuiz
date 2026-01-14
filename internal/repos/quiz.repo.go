@@ -13,6 +13,7 @@ import (
 
 type QuizRepo interface {
 	CreateTx(ctx context.Context, quiz *models.Quiz, tx pgx.Tx) error
+	GetAllQuizzes(ctx context.Context) ([]models.Quiz, error)
 	FindByID(ctx context.Context, id string) (*models.Quiz, error)
 	Update(ctx context.Context, quiz *models.Quiz) error
 	Delete(ctx context.Context, id string) error
@@ -56,6 +57,62 @@ func (r *quizRepo) CreateTx(ctx context.Context, quiz *models.Quiz, tx pgx.Tx) e
 	).Scan(&quiz.ID, &quiz.CreatedAt, &quiz.UpdatedAt)
 
 	return err
+}
+
+func (r *quizRepo) GetAllQuizzes(ctx context.Context) ([]models.Quiz, error) {
+	query := `
+	SELECT
+		id,
+		community_id,
+		creator_id,
+		"title",
+		"description",
+		duration_minutes,
+		likes_count,
+		students_count,
+		average_score,
+		is_published,
+		created_at
+	FROM quizzes
+	WHERE is_published = true
+	ORDER BY created_at DESC
+`
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var quizzes []models.Quiz
+
+	for rows.Next() {
+		var quiz models.Quiz
+
+		err := rows.Scan(
+			&quiz.ID,
+			&quiz.CommunityID,
+			&quiz.CreatorID,
+			&quiz.Title,
+			&quiz.Description,
+			&quiz.DurationMinutes,
+			&quiz.LikesCount,
+			&quiz.StudentsCount,
+			&quiz.AverageScore,
+			&quiz.IsPublished,
+			&quiz.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		quizzes = append(quizzes, quiz)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return quizzes, nil
 }
 
 func (r *quizRepo) FindByID(ctx context.Context, id string) (*models.Quiz, error) {

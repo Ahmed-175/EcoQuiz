@@ -25,6 +25,8 @@ type Quiz struct {
 	LikesCount      int       `json:"likes_count"`
 	IsPublished     bool      `json:"is_published"`
 	CreatedAt       time.Time `json:"created_at"`
+	AverageScore    float64   `json:"average_score"`
+	StudentsCount   int       `json:"students_count"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
