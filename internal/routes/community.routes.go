@@ -13,6 +13,7 @@ func CommunityRoutes(rg *gin.RouterGroup, communityHandler *handlers.CommunityHa
 	community.Use(middleware.JWTAuth(secretJWT))
 	{
 		community.POST("/", communityHandler.CreateCommunity)
-		community.GET("/:id" ,communityHandler.GetCommunityByID)
+		community.GET("/:id", communityHandler.GetCommunityByID)
+		community.POST("/:id/join", communityHandler.JoinCommunity)
 	}
 }

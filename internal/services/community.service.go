@@ -69,3 +69,34 @@ func (s *CommunityService) GetCommunityByID(
 
 	return res, nil
 }
+
+func (s *CommunityService) JoinCommunity(ctx context.Context, userID, commID string) (string, error) {
+	comm, err := s.communityRepo.FindByID(ctx, commID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", errors.New("community does not exist")
+		}
+		return "", errors.New("failed to get community")
+	}
+
+	if comm.CreatorID == userID {
+		return "", errors.New("creator cannot join or leave their own community")
+	}
+
+	_, err = s.communityRepo.UserRole(ctx, commID, userID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			// User is not a member, so join
+			if err := s.communityRepo.AddMember(ctx, commID, userID, "member"); err != nil {
+				return "", errors.New("failed to join community: " + err.Error())
+			}
+			return "joined", nil
+		}
+		return "", errors.New("failed to check membership")
+	}
+	// User is a member, so leave
+	if err := s.communityRepo.RemoveMember(ctx, commID, userID); err != nil {
+		return "", errors.New("failed to leave community: " + err.Error())
+	}
+	return "left", nil
+}
