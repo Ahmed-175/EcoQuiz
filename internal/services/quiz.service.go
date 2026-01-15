@@ -8,6 +8,7 @@ import (
 	"ecoquiz/internal/repos"
 	"ecoquiz/internal/utils"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -111,7 +112,6 @@ func (s *QuizService) CreateQuiz(
 	}
 	return quiz.ID, nil
 }
-
 
 func (s *QuizService) GetAllQuizzes(
 	ctx context.Context,
@@ -244,8 +244,6 @@ func (s *QuizService) TakeQuiz(
 
 }
 
-
-
 func (s *QuizService) SubmitQuiz(
 	ctx context.Context,
 	userID string,
@@ -291,8 +289,9 @@ func (s *QuizService) SubmitQuiz(
 		QuizID:           quizID,
 		TimeTakenMinutes: submitReq.DurationMinutes,
 		TotalQuestions:   len(questions),
-		Score:            0, 
+		Score:            0,
 		Percentage:       0,
+		AttemptCount:     len(userAttempts) + 1,
 	}
 
 	if err := s.quizRepo.CreateUserAttempt(ctx, attempt, tx); err != nil {
@@ -309,9 +308,9 @@ func (s *QuizService) SubmitQuiz(
 		}
 
 		userAnswers = append(userAnswers, &models.UserAnwer{
-			AttemptID: attempt.ID,
+			AttemptID:  attempt.ID,
 			QuestionID: q.ID,
-			OptionID: answer.OptionID,
+			OptionID:   answer.OptionID,
 		})
 	}
 
@@ -321,6 +320,7 @@ func (s *QuizService) SubmitQuiz(
 
 	attempt.Score = score
 	attempt.Percentage = (float64(score) / float64(len(questions))) * 100
+	attempt.CompletedAt = time.Now()
 
 	if err := s.quizRepo.UpdateAttempt(ctx, attempt, tx); err != nil {
 		return "", errors.New("failed to update user attempt: " + err.Error())
@@ -352,3 +352,5 @@ func (s *QuizService) SubmitQuiz(
 
 	return attempt.ID, nil
 }
+
+

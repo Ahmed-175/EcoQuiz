@@ -299,8 +299,9 @@ func (r *quizRepo) CreateUserAttempt(ctx context.Context, attempt *models.QuizAt
 			score,
 			total_questions,
 			percentage,
-			time_taken_minutes)
-		VALUES ($1, $2, $3, $4, $5, $6)
+			time_taken_minutes,
+			attempt_number)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 	err := tx.QueryRow(ctx, query,
@@ -310,6 +311,7 @@ func (r *quizRepo) CreateUserAttempt(ctx context.Context, attempt *models.QuizAt
 		attempt.TotalQuestions,
 		attempt.Percentage,
 		attempt.TimeTakenMinutes,
+		attempt.AttemptCount,
 	).Scan(&attempt.ID)
 	return err
 }
@@ -424,8 +426,7 @@ func (r *quizRepo) FindAttemptByQuiz(
 	return attempts, nil
 }
 
-
-func (r *quizRepo) UpdateAttempt(ctx context.Context, attempt *models.QuizAttempts, tx pgx.Tx) error{
+func (r *quizRepo) UpdateAttempt(ctx context.Context, attempt *models.QuizAttempts, tx pgx.Tx) error {
 	query := `
 		UPDATE quiz_attempts
 		SET
@@ -437,7 +438,9 @@ func (r *quizRepo) UpdateAttempt(ctx context.Context, attempt *models.QuizAttemp
 			completed_at = $6
 		WHERE id = $7
 	`
-	err := tx.QueryRow(ctx, query,
+	// Changed from QueryRow to Exec because the UPDATE statement does not include a RETURNING clause.
+	// Therefore, it does not return any rows to scan, checking RowsAffected ensure the update happened.
+	cmdTag, err := tx.Exec(ctx, query,
 		attempt.Score,
 		attempt.TotalQuestions,
 		attempt.Percentage,
@@ -445,6 +448,14 @@ func (r *quizRepo) UpdateAttempt(ctx context.Context, attempt *models.QuizAttemp
 		attempt.AttemptCount,
 		attempt.CompletedAt,
 		attempt.ID,
-	).Scan(&attempt.ID)
-	return err
+	)
+	if err != nil {
+		return err
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return errors.New("quiz attempt not found")
+	}
+
+	return nil
 }
