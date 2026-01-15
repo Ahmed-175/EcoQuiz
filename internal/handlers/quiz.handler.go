@@ -31,7 +31,7 @@ func (h *QuizHandler) CreateQuiz(c *gin.Context) {
 	quizId, err := h.quizService.CreateQuiz(c.Request.Context(), userID, &quizRequest)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error" : err.Error()}) 
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"quiz_id": quizId})
@@ -93,4 +93,26 @@ func (h *QuizHandler) SubmitQuiz(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"result": result})
+}
+
+func (h *QuizHandler) ToggleLike(c *gin.Context) {
+	userID := c.GetString("userID")
+	quizID := c.Param("id")
+
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unauthorized"})
+		return
+	}
+	if quizID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Quiz ID is required"})
+		return
+	}
+
+	status, err := h.quizService.ToggleLike(c.Request.Context(), quizID, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": status})
 }

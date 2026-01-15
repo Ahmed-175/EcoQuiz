@@ -26,6 +26,10 @@ type QuizRepo interface {
 	UpdateAttempt(ctx context.Context, attempt *models.QuizAttempts, tx pgx.Tx) error
 	FindAttemptByUser(ctx context.Context, quizID string, userID string) ([]*models.QuizAttempts, error)
 	FindAttemptByQuiz(ctx context.Context, quizID string) ([]*models.QuizAttempts, error)
+
+	AddLike(ctx context.Context, quizID, userID string) error
+	RemoveLike(ctx context.Context, quizID, userID string) error
+	HasLiked(ctx context.Context, quizID, userID string) (bool, error)
 }
 
 type quizRepo struct {
@@ -458,4 +462,55 @@ func (r *quizRepo) UpdateAttempt(ctx context.Context, attempt *models.QuizAttemp
 	}
 
 	return nil
+}
+
+func (r *quizRepo) AddLike(ctx context.Context, quizID, userID string) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	queryLike := `INSERT INTO quiz_likes (quiz_id, user_id) VALUES ($1, $2)`
+	if _, err := tx.Exec(ctx, queryLike, quizID, userID); err != nil {
+		return err
+	}
+
+	queryCount := `UPDATE quizzes SET likes_count = likes_count + 1 WHERE id = $1`
+	if _, err := tx.Exec(ctx, queryCount, quizID); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *quizRepo) RemoveLike(ctx context.Context, quizID, userID string) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	queryLike := `DELETE FROM quiz_likes WHERE quiz_id = $1 AND user_id = $2`
+	cmdTag, err := tx.Exec(ctx, queryLike, quizID, userID)
+	if err != nil {
+		return err
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return errors.New("like not found")
+	}
+
+	queryCount := `UPDATE quizzes SET likes_count = likes_count - 1 WHERE id = $1`
+	if _, err := tx.Exec(ctx, queryCount, quizID); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *quizRepo) HasLiked(ctx context.Context, quizID, userID string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM quiz_likes WHERE quiz_id = $1 AND user_id = $2)`
+	var exists bool
+	err := r.db.QueryRow(ctx, query, quizID, userID).Scan(&exists)
+	return exists, err
 }

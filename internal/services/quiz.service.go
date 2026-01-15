@@ -353,4 +353,29 @@ func (s *QuizService) SubmitQuiz(
 	return attempt.ID, nil
 }
 
+func (s *QuizService) ToggleLike(ctx context.Context, quizID, userID string) (string, error) {
+	_, err := s.quizRepo.FindByID(ctx, quizID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", errors.New("quiz not found")
+		}
+		return "", err
+	}
 
+	hasLiked, err := s.quizRepo.HasLiked(ctx, quizID, userID)
+	if err != nil {
+		return "", err
+	}
+
+	if hasLiked {
+		if err := s.quizRepo.RemoveLike(ctx, quizID, userID); err != nil {
+			return "", err
+		}
+		return "unliked", nil
+	}
+
+	if err := s.quizRepo.AddLike(ctx, quizID, userID); err != nil {
+		return "", err
+	}
+	return "liked", nil
+}

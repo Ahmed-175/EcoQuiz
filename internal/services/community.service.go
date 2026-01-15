@@ -86,7 +86,6 @@ func (s *CommunityService) JoinCommunity(ctx context.Context, userID, commID str
 	_, err = s.communityRepo.UserRole(ctx, commID, userID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			// User is not a member, so join
 			if err := s.communityRepo.AddMember(ctx, commID, userID, "member"); err != nil {
 				return "", errors.New("failed to join community: " + err.Error())
 			}
@@ -94,7 +93,6 @@ func (s *CommunityService) JoinCommunity(ctx context.Context, userID, commID str
 		}
 		return "", errors.New("failed to check membership")
 	}
-	// User is a member, so leave
 	if err := s.communityRepo.RemoveMember(ctx, commID, userID); err != nil {
 		return "", errors.New("failed to leave community: " + err.Error())
 	}

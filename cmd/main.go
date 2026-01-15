@@ -29,18 +29,20 @@ func main() {
 	quizRepo := repos.NewQuizRepo(pool)
 	questionRepo := repos.NewQuestionRepo(pool)
 	optionRepo := repos.NewOptionRepo(pool)
+	commentRepo := repos.NewCommentRepo(pool)
 
 	authService := services.NewAuthService(userRepo, cfg.JwtSecret)
 	userService := services.NewUserService(userRepo)
 	oauthCfg := utils.GoogleConfig(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
 	communityService := services.NewCommunityService(communityRepo, userRepo)
-	quizService := services.NewQuizService(quizRepo, questionRepo, optionRepo,userRepo, communityRepo)
-
+	quizService := services.NewQuizService(quizRepo, questionRepo, optionRepo, userRepo, communityRepo)
+	commentService := services.NewCommentService(commentRepo, questionRepo)
 
 	authHandler := handlers.NewAuthHandler(*authService, oauthCfg, cfg.ClientURL)
 	userHandler := handlers.NewUserHandler(*userService)
 	communityHandler := handlers.NewCommunityHandler(*communityService)
 	quizHandler := handlers.NewQuizHandler(*quizService)
+	commentHandler := handlers.NewCommentHandler(*commentService)
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -54,8 +56,9 @@ func main() {
 		r,
 		authHandler,
 		userHandler,
-	    communityHandler,
-		quizHandler, 
+		communityHandler,
+		quizHandler,
+		commentHandler,
 		cfg.JwtSecret,
 	)
 

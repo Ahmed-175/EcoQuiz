@@ -11,6 +11,7 @@ func SetupRoutes(router *gin.Engine,
 	userHandler *handlers.UserHandler,
 	communityHandler *handlers.CommunityHandler,
 	quizHandler *handlers.QuizHandler,
+	commentHandler *handlers.CommentHandler,
 	jwtsecret string,
 ) {
 	api := router.Group("/api")
@@ -18,4 +19,5 @@ func SetupRoutes(router *gin.Engine,
 	UserRoutes(api, userHandler, jwtsecret)
 	CommunityRoutes(api, communityHandler, jwtsecret)
 	QuizRoutes(api, quizHandler, jwtsecret)
+	CommentRoutes(api, commentHandler, jwtsecret)
 }
