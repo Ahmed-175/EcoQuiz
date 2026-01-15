@@ -27,11 +27,11 @@ func NewUserRepo(db *pgxpool.Pool) UserRepo {
 }
 
 func (r *userRepo) Create(ctx context.Context, user *models.User) error {
-	query := `INSERT INTO users(username , email , avatar , google_id)
-	 VALUES ($1 , $2 , $3 , $4) 
+	query := `INSERT INTO users(username , email , avatar , google_id , password_hash)
+	 VALUES ($1 , $2 , $3 , $4, $5) 
 	 RETURNING id , created_at , updated_at 
 	 `
-	return r.db.QueryRow(ctx, query, user.Username, user.Email, user.Avatar, user.GoogleID).Scan(
+	return r.db.QueryRow(ctx, query, user.Username, user.Email, user.Avatar, user.GoogleID, user.PasswordHash).Scan(
 		&user.ID,
 		&user.CreatedAt,
 		&user.Updated_at,
@@ -72,6 +72,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string) (*models.User,
 	query := `SELECT 
 	id ,
     username ,
+	password_hash,
     avatar ,
 	email ,
 	google_id ,
@@ -83,6 +84,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string) (*models.User,
 	err := r.db.QueryRow(ctx, query, email).Scan(
 		&user.ID,
 		&user.Username,
+		&user.PasswordHash,
 		&user.Avatar,
 		&user.Email,
 		&user.GoogleID,

@@ -51,3 +51,22 @@ func (h *QuizHandler) GetAllQuizzes(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"quizzes": quizzes})
 }
+
+func (h *QuizHandler) TakeQuiz(c *gin.Context) {
+	userID := c.GetString("userID")
+	quizID := c.Param("id")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unauthorized"})
+		return
+	}
+	if quizID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Quiz ID is required"})
+		return
+	}
+	quiz, err := h.quizService.TakeQuiz(c.Request.Context(), userID, quizID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"quiz": quiz})
+}

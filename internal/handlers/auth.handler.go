@@ -25,6 +25,60 @@ func NewAuthHandler(authService services.AuthService, oauthCfg *oauth2.Config, c
 	}
 }
 
+func (h *AuthHandler) Register(c *gin.Context) {
+	var req struct {
+		Username string `json:"username" binding:"required"`
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required,min=6"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	jwtToken, err := h.authService.Register(c.Request.Context(), req.Username, req.Email, req.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.SetCookie(
+		"access_token",
+		jwtToken,
+		3600*24,
+		"/",
+		"",
+		false,
+		true,
+	)
+	c.JSON(http.StatusOK, gin.H{"message": "registered successfully"})
+}
+func (h *AuthHandler) Login(c *gin.Context) {
+	var req struct {
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error":err.Error()})
+		return
+	}
+	fmt.Println(req)
+	jwtToken, err := h.authService.Login(c.Request.Context(), req.Email, req.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+	c.SetCookie(
+		"access_token",
+		jwtToken,
+		3600*24,
+		"/",
+		"",
+		false,
+		true,
+	)
+	c.JSON(http.StatusOK, gin.H{"message": "logged in successfully"})
+}
+
 func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 	url := h.oauthCfg.AuthCodeURL("state")
 	c.Redirect(http.StatusTemporaryRedirect, url)
@@ -73,4 +127,17 @@ func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 	)
 	redirectURL := fmt.Sprintf("%s/home", h.clientURL)
 	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
+}
+
+func (h *AuthHandler) Logout(c *gin.Context) {
+	c.SetCookie(
+		"access_token",
+		"",
+		-1,
+		"/",
+		"",
+		false,
+		true,
+	)
+	c.JSON(http.StatusOK, gin.H{"message": "logged out"})
 }

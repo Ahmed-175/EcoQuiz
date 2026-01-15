@@ -170,11 +170,11 @@ func (s *QuizService) GetAllQuizzes(
 				}
 			}
 		}
-
 		creator, err := s.userRepo.FindByID(ctx, quiz.CreatorID)
 		if err != nil {
 			return nil, errors.New("failed to get creator")
 		}
+		creatorRole, _ := s.communityRepo.UserRole(ctx, community.ID, quiz.CreatorID)
 
 		quizRes.Creator = dto_quiz.Creator{
 			ID:       creator.ID,
@@ -182,9 +182,62 @@ func (s *QuizService) GetAllQuizzes(
 			Email:    creator.Email,
 			Avatar:   creator.Avatar,
 		}
+		if creatorRole == "creator" {
+			quizRes.Creator.Role = "CREATOR"
+		} else if creatorRole == "admin" {
+			quizRes.Creator.Role = "ADMIN"
+		} else {
+			quizRes.Creator.Role = "MEMBER"
+		}
 
 		quizzesResponse = append(quizzesResponse, quizRes)
 	}
 
 	return quizzesResponse, nil
+}
+
+func (s *QuizService) TakeQuiz(
+	ctx context.Context,
+	userID string,
+	quizID string,
+) (*dto_quiz.TakeQuizResponse, error) {
+	quiz, err := s.quizRepo.FindByID(ctx, quizID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("Quiz not found")
+		}
+		return nil, errors.New("Failed to get Quiz")
+	}
+	questions, err := s.questionRepo.FindByQuizID(ctx, quizID)
+	if err != nil {
+		return nil, errors.New("Failed to get Questions")
+	}
+	var questionsRes []dto_quiz.QuestionTake
+	for _, q := range questions {
+		var questionRes dto_quiz.QuestionTake
+		questionRes.QuestionID = q.ID
+		questionRes.QuestionText = q.QuestionText
+		options, err := s.optionRepo.GetByQuestionID(ctx, q.ID)
+		if err != nil {
+			return nil, errors.New("Failed to get Options")
+		}
+		var optionsRes []dto_quiz.OptionTake
+		for _, o := range options {
+			optionRes := dto_quiz.OptionTake{
+				OptionID: o.ID,
+				Text:     o.Text,
+			}
+			optionsRes = append(optionsRes, optionRes)
+		}
+		questionRes.Options = optionsRes
+		questionsRes = append(questionsRes, questionRes)
+	}
+	takeQuizRes := &dto_quiz.TakeQuizResponse{
+		QuizID:    quiz.ID,
+		Title:     quiz.Title,
+		Duration:  quiz.DurationMinutes,
+		Questions: questionsRes,
+	}
+	return takeQuizRes, nil
+
 }
