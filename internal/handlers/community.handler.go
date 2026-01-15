@@ -92,3 +92,39 @@ func (h *CommunityHandler) JoinCommunity(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": status})
 }
+
+func (h *CommunityHandler) PromoteMember(c *gin.Context) {
+	commID := c.Param("id")
+	targetUserID := c.Param("userId")
+	requesterID := c.GetString("userID")
+
+	if commID == "" || targetUserID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "community id and target user id are required"})
+		return
+	}
+
+	if err := h.communityService.UpdateMemberRole(c.Request.Context(), requesterID, commID, targetUserID, "admin"); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "member promoted to admin"})
+}
+
+func (h *CommunityHandler) DemoteMember(c *gin.Context) {
+	commID := c.Param("id")
+	targetUserID := c.Param("userId")
+	requesterID := c.GetString("userID")
+
+	if commID == "" || targetUserID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "community id and target user id are required"})
+		return
+	}
+
+	if err := h.communityService.UpdateMemberRole(c.Request.Context(), requesterID, commID, targetUserID, "member"); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "member demoted to member"})
+}

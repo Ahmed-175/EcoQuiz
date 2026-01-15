@@ -98,3 +98,36 @@ func (s *CommunityService) JoinCommunity(ctx context.Context, userID, commID str
 	}
 	return "left", nil
 }
+
+func (s *CommunityService) UpdateMemberRole(ctx context.Context, requesterID, commID, targetUserID, newRole string) error {
+	comm, err := s.communityRepo.FindByID(ctx, commID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return errors.New("community does not exist")
+		}
+		return errors.New("failed to get community")
+	}
+
+	if comm.CreatorID != requesterID {
+		return errors.New("unauthorized: only the creator can change member roles")
+	}
+
+	if targetUserID == comm.CreatorID {
+		return errors.New("cannot change role of the creator")
+	}
+
+	// Verify target user is a member
+	_, err = s.communityRepo.UserRole(ctx, commID, targetUserID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return errors.New("target user is not a member of this community")
+		}
+		return errors.New("failed to check target user membership")
+	}
+
+	if err := s.communityRepo.UpdateMemberRole(ctx, commID, targetUserID, newRole); err != nil {
+		return errors.New("failed to update member role: " + err.Error())
+	}
+
+	return nil
+}
