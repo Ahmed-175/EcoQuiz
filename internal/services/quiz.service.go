@@ -89,7 +89,7 @@ func (s *QuizService) CreateQuiz(
 	}
 
 	if err := s.questionRepo.CreateBatchTx(ctx, questions, tx); err != nil {
-		return "", errors.New("Failed to create question")
+		return "", errors.New("Failed to create question" + err.Error())
 	}
 
 	for i, q := range quizReq.Questions {
@@ -111,6 +111,8 @@ func (s *QuizService) CreateQuiz(
 	}
 	return quiz.ID, nil
 }
+
+
 func (s *QuizService) GetAllQuizzes(
 	ctx context.Context,
 	userID string,
@@ -240,4 +242,113 @@ func (s *QuizService) TakeQuiz(
 	}
 	return takeQuizRes, nil
 
+}
+
+
+
+func (s *QuizService) SubmitQuiz(
+	ctx context.Context,
+	userID string,
+	quizID string,
+	submitReq *dto_quiz.SubmitQuizRequest,
+) (string, error) {
+
+	tx, err := s.quizRepo.BeginTx(ctx)
+	if err != nil {
+		return "", errors.New("failed to start transaction")
+	}
+	defer tx.Rollback(ctx)
+
+	quiz, err := s.quizRepo.FindByID(ctx, quizID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", errors.New("quiz not found")
+		}
+		return "", errors.New("failed to get quiz")
+	}
+
+	if submitReq.DurationMinutes > quiz.DurationMinutes {
+		return "", errors.New("time out")
+	}
+
+	questions, err := s.questionRepo.FindByQuizID(ctx, quizID)
+	if err != nil {
+		return "", errors.New("failed to get questions")
+	}
+
+	if len(submitReq.Answers) != len(questions) {
+		return "", errors.New("answers count does not match questions count")
+	}
+
+	userAttempts, err := s.quizRepo.FindAttemptByUser(ctx, quizID, userID)
+	if err != nil && err != pgx.ErrNoRows {
+		return "", errors.New("failed to check user attempts: " + err.Error())
+	}
+	isFirstAttempt := len(userAttempts) == 0
+
+	attempt := &models.QuizAttempts{
+		UserID:           userID,
+		QuizID:           quizID,
+		TimeTakenMinutes: submitReq.DurationMinutes,
+		TotalQuestions:   len(questions),
+		Score:            0, 
+		Percentage:       0,
+	}
+
+	if err := s.quizRepo.CreateUserAttempt(ctx, attempt, tx); err != nil {
+		return "", errors.New("failed to save user attempt: " + err.Error())
+	}
+
+	score := 0
+	userAnswers := make([]*models.UserAnwer, 0, len(questions))
+	for i, q := range questions {
+		answer := submitReq.Answers[i]
+
+		if answer.AnswerText == q.CorrectAnswer {
+			score++
+		}
+
+		userAnswers = append(userAnswers, &models.UserAnwer{
+			AttemptID: attempt.ID,
+			QuestionID: q.ID,
+			OptionID: answer.OptionID,
+		})
+	}
+
+	if err := s.quizRepo.CreateBatchUserAnswer(ctx, userAnswers, tx); err != nil {
+		return "", errors.New("failed to save user answers: " + err.Error())
+	}
+
+	attempt.Score = score
+	attempt.Percentage = (float64(score) / float64(len(questions))) * 100
+
+	if err := s.quizRepo.UpdateAttempt(ctx, attempt, tx); err != nil {
+		return "", errors.New("failed to update user attempt: " + err.Error())
+	}
+
+	if isFirstAttempt {
+		quiz.StudentsCount++
+	}
+
+	allAttempts, err := s.quizRepo.FindAttemptByQuiz(ctx, quizID)
+	if err != nil {
+		return "", errors.New("failed to calculate average score: " + err.Error())
+	}
+
+	totalScore := 0
+	for _, a := range allAttempts {
+		totalScore += a.Score
+	}
+
+	quiz.AverageScore = float64(totalScore) / float64(len(allAttempts))
+
+	if err := s.quizRepo.Update(ctx, quiz); err != nil {
+		return "", errors.New("failed to update quiz stats: " + err.Error())
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return "", errors.New("failed to commit transaction: " + err.Error())
+	}
+
+	return attempt.ID, nil
 }

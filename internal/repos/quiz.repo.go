@@ -19,6 +19,13 @@ type QuizRepo interface {
 	Delete(ctx context.Context, id string) error
 	FindByCommunityID(ctx context.Context, communityID string) ([]*models.Quiz, error)
 	BeginTx(ctx context.Context) (pgx.Tx, error)
+
+	CreateBatchUserAnswer(ctx context.Context, answer []*models.UserAnwer, tx pgx.Tx) error
+	CreateUserAttempt(ctx context.Context, attempt *models.QuizAttempts, tx pgx.Tx) error
+
+	UpdateAttempt(ctx context.Context, attempt *models.QuizAttempts, tx pgx.Tx) error
+	FindAttemptByUser(ctx context.Context, quizID string, userID string) ([]*models.QuizAttempts, error)
+	FindAttemptByQuiz(ctx context.Context, quizID string) ([]*models.QuizAttempts, error)
 }
 
 type quizRepo struct {
@@ -39,10 +46,8 @@ func (r *quizRepo) CreateTx(ctx context.Context, quiz *models.Quiz, tx pgx.Tx) e
 			title,
 			description,
 			duration_minutes,
-			likes_count,
-			is_published
-		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+			is_published)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, created_at, updated_at
 	`
 
@@ -52,7 +57,6 @@ func (r *quizRepo) CreateTx(ctx context.Context, quiz *models.Quiz, tx pgx.Tx) e
 		quiz.Title,
 		quiz.Description,
 		quiz.DurationMinutes,
-		quiz.LikesCount,
 		quiz.IsPublished,
 	).Scan(&quiz.ID, &quiz.CreatedAt, &quiz.UpdatedAt)
 
@@ -251,4 +255,196 @@ func (r *quizRepo) FindByCommunityID(ctx context.Context, communityID string) ([
 	}
 
 	return quizzes, nil
+}
+
+func (r *quizRepo) CreateBatchUserAnswer(
+	ctx context.Context,
+	answers []*models.UserAnwer,
+	tx pgx.Tx,
+) error {
+
+	query := `
+		INSERT INTO user_answers (attempt_id, question_id, option_id)
+		VALUES ($1, $2, $3)
+	`
+
+	batch := &pgx.Batch{}
+
+	for _, a := range answers {
+		batch.Queue(
+			query,
+			a.AttemptID,
+			a.QuestionID,
+			a.OptionID,
+		)
+	}
+
+	br := tx.SendBatch(ctx, batch)
+	defer br.Close()
+
+	for range answers {
+		if _, err := br.Exec(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *quizRepo) CreateUserAttempt(ctx context.Context, attempt *models.QuizAttempts, tx pgx.Tx) error {
+	query := `
+		INSERT INTO quiz_attempts (
+			quiz_id,
+			user_id,
+			score,
+			total_questions,
+			percentage,
+			time_taken_minutes)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`
+	err := tx.QueryRow(ctx, query,
+		attempt.QuizID,
+		attempt.UserID,
+		attempt.Score,
+		attempt.TotalQuestions,
+		attempt.Percentage,
+		attempt.TimeTakenMinutes,
+	).Scan(&attempt.ID)
+	return err
+}
+
+func (r *quizRepo) FindAttemptByUser(
+	ctx context.Context,
+	quizID string,
+	userID string,
+) ([]*models.QuizAttempts, error) {
+
+	query := `
+		SELECT 
+			id,
+			quiz_id,
+			user_id,
+			score,
+			total_questions,
+			percentage,
+			time_taken_minutes,
+			completed_at
+		FROM quiz_attempts
+		WHERE quiz_id = $1 AND user_id = $2 ORDER BY completed_at
+	`
+
+	rows, err := r.db.Query(ctx, query, quizID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	quizAttempts := make([]*models.QuizAttempts, 0)
+
+	for rows.Next() {
+		attempt := &models.QuizAttempts{}
+
+		if err := rows.Scan(
+			&attempt.ID,
+			&attempt.QuizID,
+			&attempt.UserID,
+			&attempt.Score,
+			&attempt.TotalQuestions,
+			&attempt.Percentage,
+			&attempt.TimeTakenMinutes,
+			&attempt.CompletedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		quizAttempts = append(quizAttempts, attempt)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return quizAttempts, nil
+}
+
+func (r *quizRepo) FindAttemptByQuiz(
+	ctx context.Context,
+	quizID string,
+) ([]*models.QuizAttempts, error) {
+
+	query := `
+		SELECT
+			id,
+			quiz_id,
+			user_id,
+			score,
+			total_questions,
+			percentage,
+			time_taken_minutes,
+			attempt_number,
+			completed_at
+		FROM quiz_attempts
+		WHERE quiz_id = $1 AND attempt_number = 1
+		ORDER BY completed_at DESC
+	`
+
+	rows, err := r.db.Query(ctx, query, quizID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	attempts := make([]*models.QuizAttempts, 0)
+
+	for rows.Next() {
+		attempt := &models.QuizAttempts{}
+
+		if err := rows.Scan(
+			&attempt.ID,
+			&attempt.QuizID,
+			&attempt.UserID,
+			&attempt.Score,
+			&attempt.TotalQuestions,
+			&attempt.Percentage,
+			&attempt.TimeTakenMinutes,
+			&attempt.AttemptCount,
+			&attempt.CompletedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		attempts = append(attempts, attempt)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return attempts, nil
+}
+
+
+func (r *quizRepo) UpdateAttempt(ctx context.Context, attempt *models.QuizAttempts, tx pgx.Tx) error{
+	query := `
+		UPDATE quiz_attempts
+		SET
+			score = $1,
+			total_questions = $2,
+			percentage = $3,
+			time_taken_minutes = $4,
+			attempt_number = $5,
+			completed_at = $6
+		WHERE id = $7
+	`
+	err := tx.QueryRow(ctx, query,
+		attempt.Score,
+		attempt.TotalQuestions,
+		attempt.Percentage,
+		attempt.TimeTakenMinutes,
+		attempt.AttemptCount,
+		attempt.CompletedAt,
+		attempt.ID,
+	).Scan(&attempt.ID)
+	return err
 }

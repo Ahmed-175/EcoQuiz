@@ -64,3 +64,42 @@ type Option struct {
 	Text       string `json:"text"`
 	IsCorrect  bool   `json:"is_correct"`
 }
+
+//quiz_attempts (
+//     id
+//     quiz_id
+//     user_id
+//     score
+//     total_questions
+//     percentage
+//     time_taken_seconds
+//     completed_at
+// );
+type QuizAttempts struct {
+	ID               string    `json:"id"`
+	QuizID           string    `json:"quiz_id"`
+	UserID           string    `json:"user_id"`
+	Score            int       `json:"score"`
+	AttemptCount     int       `json:"attempt_count"`
+	TotalQuestions   int       `json:"total_questions"`
+	Percentage       float64   `json:"percentage"`
+	TimeTakenMinutes int       `json:"time_taken_minutes"`
+	CompletedAt      time.Time `json:"completed_at"`
+}
+
+// user_answers (
+//     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+//     question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
+//     option_id UUID REFERENCES options(id) ON DELETE CASCADE,
+//     created_at TIMESTAMP DEFAULT NOW(),
+//     UNIQUE (user_id, question_id)
+// );
+
+type UserAnwer struct {
+	ID         string    `json:"id"`
+	AttemptID  string    `json:"attempt_id"`
+	QuestionID string    `json:"question_id"`
+	OptionID   string    `json:"option_id"`
+	CreatedAt  time.Time `json:"created_at"`
+}

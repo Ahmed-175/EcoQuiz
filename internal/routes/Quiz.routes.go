@@ -14,7 +14,7 @@ func QuizRoutes(api *gin.RouterGroup, quizHandler *handlers.QuizHandler, jwtsecr
 		quizGroup.POST("/", quizHandler.CreateQuiz)
 		quizGroup.GET("/", quizHandler.GetAllQuizzes)
 		quizGroup.GET("/:id/take", quizHandler.TakeQuiz)
+		quizGroup.POST("/:id/submit", quizHandler.SubmitQuiz)
 		// quizGroup.GET("/:id", quizHandler.GetQuizByID)
-		// quizGroup.PUT("/:id/submit", quizHandler.SubmitQuiz)
 	}
 }

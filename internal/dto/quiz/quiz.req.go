@@ -20,3 +20,14 @@ type Option struct {
 	Text      string `json:"text" binding:"required"`
 	IsCorrect bool   `json:"is_correct"`
 }
+
+type SubmitQuizRequest struct {
+	Answers         []Answer `json:"answers" binding:"required"` // questionID -> answer
+	DurationMinutes int      `json:"duration_minutes" binding:"gte=0"`
+}
+
+type Answer struct {
+	OptionID string   `json:"option_id" binding:"required,uuid"`
+	QuestionID string `json:"question_id" binding:"required,uuid"`
+	AnswerText string `json:"answer_text" binding:"required"`
+}

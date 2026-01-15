@@ -1,3 +1,0 @@
-ALTER TABLE quizzes
-ADD COLUMN average_score DECIMAL(5,2) DEFAULT 0,
-ADD COLUMN students_count INTEGER DEFAULT 0;
