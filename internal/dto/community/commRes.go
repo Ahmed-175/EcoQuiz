@@ -16,10 +16,29 @@ type Member struct {
 	Username string  `json:"username"`
 	Avatar   *string `json:"avatar"`
 	Email    string  `json:"email"`
+	Role     string  `json:"role"`
 }
+
+type Creator struct {
+	ID       string  `json:"id"`
+	Username string  `json:"username"`
+	Avatar   *string `json:"avatar"`
+	Email    string  `json:"email"`
+	Role     string  `json:"role"`
+}
+
 type Quiz struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
+	ID                string  `json:"id"`
+	Creator           Creator `json:"creator"`
+	Title             string  `json:"title"`
+	Description       string  `json:"description"`
+	DurationMinutes   int     `json:"duration_minutes"`
+	LikesCount        int     `json:"likes_count"`
+	IsNew             bool    `json:"is_new"`
+	NumberOfQuestions int     `json:"number_of_questions"`
+	AverageScore      float64 `json:"average_score"`
+	StudentsCount     int     `json:"students_count"`
+	CreatedAt         string  `json:"created_at"`
 }
 
 type GetAllCommunitiesRes struct {
@@ -28,6 +47,6 @@ type GetAllCommunitiesRes struct {
 
 type GetCommunityByIDRes struct {
 	Community Community `json:"community"`
-	Members   *[]Member `json:"member"`
-	Quizzes   *[]Quiz   `json:"quizzes"`
+	Members   []Member  `json:"members"`
+	Quizzes   []Quiz    `json:"quizzes"`
 }

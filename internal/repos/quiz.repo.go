@@ -5,7 +5,10 @@ import (
 	"errors"
 	"time"
 
+	dto_community "ecoquiz/internal/dto/community"
+	dto_quiz "ecoquiz/internal/dto/quiz"
 	"ecoquiz/internal/models"
+	"ecoquiz/internal/utils"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,6 +33,8 @@ type QuizRepo interface {
 	AddLike(ctx context.Context, quizID, userID string) error
 	RemoveLike(ctx context.Context, quizID, userID string) error
 	HasLiked(ctx context.Context, quizID, userID string) (bool, error)
+	FindQuizzesByCommunityIDWithCount(ctx context.Context, communityID string) ([]dto_community.Quiz, error)
+	GetQuizLeaderboard(ctx context.Context, quizID string) ([]dto_quiz.LeaderboardEntry, error)
 }
 
 type quizRepo struct {
@@ -513,4 +518,118 @@ func (r *quizRepo) HasLiked(ctx context.Context, quizID, userID string) (bool, e
 	var exists bool
 	err := r.db.QueryRow(ctx, query, quizID, userID).Scan(&exists)
 	return exists, err
+}
+
+func (r *quizRepo) FindQuizzesByCommunityIDWithCount(ctx context.Context, communityID string) ([]dto_community.Quiz, error) {
+	query := `
+		SELECT
+			q.id,
+			q.title,
+			q.description,
+			q.duration_minutes,
+			q.likes_count,
+			q.created_at,
+			q.students_count,
+			q.average_score,
+			(SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) as number_of_questions,
+			u.id,
+			u.username,
+			u.email,
+			u.avatar,
+			cm.role
+		FROM quizzes q
+		JOIN users u ON q.creator_id = u.id
+		LEFT JOIN community_members cm ON cm.user_id = u.id AND cm.community_id = q.community_id
+		WHERE q.community_id = $1 AND q.is_published = true
+		ORDER BY q.created_at DESC
+	`
+
+	rows, err := r.db.Query(ctx, query, communityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var quizzes []dto_community.Quiz
+	for rows.Next() {
+		var q dto_community.Quiz
+		var createdAt time.Time
+		q.Creator = dto_community.Creator{}
+		var role *string // Update to handle potential NULL role
+
+		err := rows.Scan(
+			&q.ID,
+			&q.Title,
+			&q.Description,
+			&q.DurationMinutes,
+			&q.LikesCount,
+			&createdAt,
+			&q.StudentsCount,
+			&q.AverageScore,
+			&q.NumberOfQuestions,
+			&q.Creator.ID,
+			&q.Creator.Username,
+			&q.Creator.Email,
+			&q.Creator.Avatar,
+			&role,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if role != nil {
+			q.Creator.Role = *role
+		} else {
+			q.Creator.Role = "MEMBER" // Default fallback
+		}
+
+		q.CreatedAt = utils.FormatTime(createdAt)
+		q.IsNew = utils.IsNew(createdAt)
+
+		quizzes = append(quizzes, q)
+	}
+	return quizzes, nil
+}
+
+func (r *quizRepo) GetQuizLeaderboard(ctx context.Context, quizID string) ([]dto_quiz.LeaderboardEntry, error) {
+	query := `
+		SELECT
+			qa.id,
+			qa.score,
+			qa.completed_at,
+			u.id,
+			u.username,
+			u.email,
+			u.avatar
+		FROM quiz_attempts qa
+		JOIN users u ON qa.user_id = u.id
+		WHERE qa.quiz_id = $1 AND qa.attempt_number = 1
+		ORDER BY qa.score DESC
+	`
+
+	rows, err := r.db.Query(ctx, query, quizID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var leaderboard []dto_quiz.LeaderboardEntry
+	for rows.Next() {
+		var entry dto_quiz.LeaderboardEntry
+		var submittedAt time.Time
+		if err := rows.Scan(
+			&entry.AttemptID,
+			&entry.Score,
+			&submittedAt,
+			&entry.User.ID,
+			&entry.User.Username,
+			&entry.User.Email,
+			&entry.User.Avatar,
+		); err != nil {
+			return nil, err
+		}
+		entry.SubmittedAt = utils.FormatTime(submittedAt)
+		leaderboard = append(leaderboard, entry)
+	}
+
+	return leaderboard, nil
 }

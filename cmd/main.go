@@ -34,7 +34,7 @@ func main() {
 	authService := services.NewAuthService(userRepo, cfg.JwtSecret)
 	userService := services.NewUserService(userRepo)
 	oauthCfg := utils.GoogleConfig(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
-	communityService := services.NewCommunityService(communityRepo, userRepo)
+	communityService := services.NewCommunityService(communityRepo, userRepo, quizRepo)
 	quizService := services.NewQuizService(quizRepo, questionRepo, optionRepo, userRepo, communityRepo)
 	commentService := services.NewCommentService(commentRepo, questionRepo)
 

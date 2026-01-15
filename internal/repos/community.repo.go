@@ -2,6 +2,7 @@ package repos
 
 import (
 	"context"
+	dto_community "ecoquiz/internal/dto/community"
 	"ecoquiz/internal/models"
 	"errors"
 
@@ -24,6 +25,7 @@ type CommunityRepo interface {
 
 	FindMembersByUserID(ctx context.Context, userID string) ([]models.Community, error)
 	FindMembersByRoles(ctx context.Context, commID string, roles []string) ([]models.User, error)
+	FindMembersWithRole(ctx context.Context, commID string) ([]dto_community.Member, error)
 }
 
 type communityRepo struct {
@@ -324,4 +326,28 @@ func (r *communityRepo) UserRole(
 	}
 
 	return role, nil
+}
+
+func (r *communityRepo) FindMembersWithRole(ctx context.Context, commID string) ([]dto_community.Member, error) {
+	query := `
+		SELECT u.id, u.username, u.email, u.avatar, cm.role
+		FROM users u
+		JOIN community_members cm ON cm.user_id = u.id
+		WHERE cm.community_id = $1
+	`
+	rows, err := r.db.Query(ctx, query, commID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var members []dto_community.Member
+	for rows.Next() {
+		var m dto_community.Member
+		if err := rows.Scan(&m.ID, &m.Username, &m.Email, &m.Avatar, &m.Role); err != nil {
+			return nil, err
+		}
+		members = append(members, m)
+	}
+	return members, nil
 }

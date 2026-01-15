@@ -379,3 +379,100 @@ func (s *QuizService) ToggleLike(ctx context.Context, quizID, userID string) (st
 	}
 	return "liked", nil
 }
+
+func (s *QuizService) GetQuizByID(
+	ctx context.Context,
+	userID string,
+	quizID string,
+) (*dto_quiz.QuizDetailResponse, error) {
+
+	quiz, err := s.quizRepo.FindByID(ctx, quizID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, errors.New("quiz not found")
+		}
+		return nil, errors.New("failed to get quiz: " + err.Error())
+	}
+
+	quizRes := &dto_quiz.QuizDetailResponse{
+		ID:                quiz.ID,
+		Title:             quiz.Title,
+		Description:       quiz.Description,
+		DurationMinutes:   quiz.DurationMinutes,
+		LikesCount:        quiz.LikesCount,
+		AverageScore:      quiz.AverageScore,
+		StudentsCount:     quiz.StudentsCount,
+		NumberOfQuestions: 0, // Needs a repo method to get actual count if not in quiz model, or additional query
+		CreatedAt:         utils.FormatTime(quiz.CreatedAt),
+		IsNew:             utils.IsNew(quiz.CreatedAt),
+	}
+	// Fetch question count if not in model
+	// assuming quiz model doesn't have it, but we can get it from questionRepo or add a method.
+	// For now, let's use questionRepo.FindByQuizID length if efficient enough, or add a count method.
+	// Given requirements, let's just count them.
+	questions, err := s.questionRepo.FindByQuizID(ctx, quizID)
+	if err == nil {
+		quizRes.NumberOfQuestions = len(questions)
+	}
+
+	// Community Info
+	community, err := s.communityRepo.FindByID(ctx, quiz.CommunityID)
+	if err != nil {
+		return nil, errors.New("failed to get community")
+	}
+	quizRes.Community = dto_quiz.CommunityDetail{
+		ID:        community.ID,
+		Name:      community.Name,
+		Banner:    &community.Banner.String,
+		CreatedAt: utils.FormatTime(community.CreatedAt),
+	}
+
+	// Community Join Status
+	if userID == community.CreatorID {
+		quizRes.Community.IsJoined = "CREATOR"
+	} else {
+		role, err := s.communityRepo.UserRole(ctx, community.ID, userID)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				quizRes.Community.IsJoined = "NOT_JOINED"
+			} else {
+				return nil, errors.New("failed to check community membership")
+			}
+		} else {
+			if role == "creator" {
+				quizRes.Community.IsJoined = "CREATOR"
+			} else {
+				quizRes.Community.IsJoined = "JOINED"
+			}
+		}
+	}
+
+	// Creator Info
+	creator, err := s.userRepo.FindByID(ctx, quiz.CreatorID)
+	if err != nil {
+		return nil, errors.New("failed to get creator")
+	}
+	creatorRole, _ := s.communityRepo.UserRole(ctx, community.ID, quiz.CreatorID)
+	quizRes.Creator = dto_quiz.Creator{
+		ID:       creator.ID,
+		Username: creator.Username,
+		Email:    creator.Email,
+		Avatar:   creator.Avatar,
+	}
+	if creatorRole == "creator" {
+		quizRes.Creator.Role = "CREATOR"
+	} else if creatorRole == "admin" {
+		quizRes.Creator.Role = "ADMIN"
+	} else {
+		quizRes.Creator.Role = "MEMBER"
+	}
+
+	// Leaderboard
+	leaderboard, err := s.quizRepo.GetQuizLeaderboard(ctx, quizID)
+	if err != nil {
+		return nil, errors.New("failed to get leaderboard: " + err.Error())
+	}
+	quizRes.Leaderboard = leaderboard
+
+	return quizRes, nil
+}

@@ -31,19 +31,19 @@ type Creator struct {
 }
 
 type QuizDetailResponse struct {
-	ID                string          `json:"id"`
-	Community         CommunityDetail `json:"community_id"`
-	Creator           Creator         `json:"creator"`
-	Title             string          `json:"title"`
-	Description       string          `json:"description"`
-	DurationMinutes   int             `json:"duration_minutes"`
-	LikesCount        int             `json:"likes_count"`
-	IsNew             bool            `json:"is_new"`
-	NumberOfQuestions int             `json:"number_of_questions"`
-	AverageScore      float64         `json:"average_score"`
-	StudentsCount     int             `json:"students_count"`
-	Attmpets          []Attmpet       `json:"attmpets"`
-	CreatedAt         string          `json:"created_at"`
+	ID                string             `json:"id"`
+	Community         CommunityDetail    `json:"community_id"`
+	Creator           Creator            `json:"creator"`
+	Title             string             `json:"title"`
+	Description       string             `json:"description"`
+	DurationMinutes   int                `json:"duration_minutes"`
+	LikesCount        int                `json:"likes_count"`
+	IsNew             bool               `json:"is_new"`
+	NumberOfQuestions int                `json:"number_of_questions"`
+	AverageScore      float64            `json:"average_score"`
+	StudentsCount     int                `json:"students_count"`
+	Leaderboard       []LeaderboardEntry `json:"leaderboard"`
+	CreatedAt         string             `json:"created_at"`
 }
 
 type CommunityDetail struct {
@@ -53,10 +53,19 @@ type CommunityDetail struct {
 	IsJoined  string  `json:"is_joined"` //  CREATOR - JOINED - NOT_JOINED
 	CreatedAt string  `json:"created_at"`
 }
-type Attmpet struct {
+
+type LeaderboardEntry struct {
 	AttemptID   string  `json:"attempt_id"`
 	Score       float64 `json:"score"`
 	SubmittedAt string  `json:"submitted_at"`
+	User        User    `json:"user"`
+}
+
+type User struct {
+	ID       string  `json:"id"`
+	Username string  `json:"username"`
+	Email    string  `json:"email"`
+	Avatar   *string `json:"avatar"`
 }
 
 type TakeQuizResponse struct {

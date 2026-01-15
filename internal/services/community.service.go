@@ -13,12 +13,14 @@ import (
 type CommunityService struct {
 	communityRepo repos.CommunityRepo
 	userRepo      repos.UserRepo
+	quizRepo      repos.QuizRepo
 }
 
-func NewCommunityService(communityRepo repos.CommunityRepo, userRepo repos.UserRepo) *CommunityService {
+func NewCommunityService(communityRepo repos.CommunityRepo, userRepo repos.UserRepo, quizRepo repos.QuizRepo) *CommunityService {
 	return &CommunityService{
 		communityRepo: communityRepo,
 		userRepo:      userRepo,
+		quizRepo:      quizRepo,
 	}
 }
 
@@ -66,6 +68,18 @@ func (s *CommunityService) GetCommunityByID(
 	res := &dto_community.GetCommunityByIDRes{
 		Community: *utils.TransformSingleCommunity(comm),
 	}
+
+	members, err := s.communityRepo.FindMembersWithRole(ctx, commID)
+	if err != nil {
+		return nil, errors.New("failed to get community members")
+	}
+	res.Members = members
+
+	quizzes, err := s.quizRepo.FindQuizzesByCommunityIDWithCount(ctx, commID)
+	if err != nil {
+		return nil, errors.New("failed to get community quizzes")
+	}
+	res.Quizzes = quizzes
 
 	return res, nil
 }
