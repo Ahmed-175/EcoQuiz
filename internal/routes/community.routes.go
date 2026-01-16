@@ -17,5 +17,6 @@ func CommunityRoutes(rg *gin.RouterGroup, communityHandler *handlers.CommunityHa
 		community.POST("/:id/join", communityHandler.JoinCommunity)
 		community.PUT("/:id/members/:userId/promote", communityHandler.PromoteMember)
 		community.PUT("/:id/members/:userId/demote", communityHandler.DemoteMember)
+		community.POST("/upload-banner", communityHandler.UploadBanner)
 	}
 }

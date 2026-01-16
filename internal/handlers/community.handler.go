@@ -3,6 +3,7 @@ package handlers
 import (
 	dto_community "ecoquiz/internal/dto/community"
 	"ecoquiz/internal/services"
+	"ecoquiz/internal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -127,4 +128,20 @@ func (h *CommunityHandler) DemoteMember(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "member demoted to member"})
+}
+
+func (h *CommunityHandler) UploadBanner(c *gin.Context) {
+	file, err := c.FormFile("banner")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "banner image is required"})
+		return
+	}
+
+	url, err := utils.SaveImage(file, "banner")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save image: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"url": url})
 }
