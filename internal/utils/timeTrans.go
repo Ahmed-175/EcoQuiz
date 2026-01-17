@@ -63,18 +63,16 @@ func FormatTime(t time.Time) string {
 }
 
 func TransformTime(comms []*models.Community) *dto_community.GetAllCommunitiesRes {
-	var commsList []dto_community.Community
+	var commsList []dto_community.CommunityDetailRes
 
 	for _, comm := range comms {
-		c := dto_community.Community{
+		c := dto_community.CommunityDetailRes{
 			ID:                        comm.ID,
 			Name:                      comm.Name,
-			Description:               *nullStringToPtr(comm.Description),
-			Banner:                    *nullStringToPtr(comm.Banner),
-			CreatorID:                 comm.CreatorID,
+			Description:               comm.Description.String,
+			Banner:                    comm.Banner.String,
 			AllowPublicQuizSubmission: comm.AllowPublicQuizSubmission,
 			CreatedAt:                 FormatTime(comm.CreatedAt),
-			UpdatedAt:                 FormatTime(comm.UpdatedAt),
 		}
 		commsList = append(commsList, c)
 	}
@@ -84,16 +82,14 @@ func TransformTime(comms []*models.Community) *dto_community.GetAllCommunitiesRe
 	}
 }
 
-func TransformSingleCommunity(comm *models.Community) *dto_community.Community {
-	return &dto_community.Community{
+func TransformSingleCommunity(comm *models.Community) *dto_community.CommunityDetailRes {
+	return &dto_community.CommunityDetailRes{
 		ID:                        comm.ID,
 		Name:                      comm.Name,
-		Description:               *nullStringToPtr(comm.Description),
-		Banner:                    *nullStringToPtr(comm.Banner),
-		CreatorID:                 comm.CreatorID,
+		Description:               comm.Description.String,
+		Banner:                    comm.Banner.String,
 		AllowPublicQuizSubmission: comm.AllowPublicQuizSubmission,
 		CreatedAt:                 FormatTime(comm.CreatedAt),
-		UpdatedAt:                 FormatTime(comm.UpdatedAt),
 	}
 }
 

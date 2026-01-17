@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { getUserProfile } from "./services/userService";
 import CreateQuiz from "./pages/quiz/CreateQuiz";
+import AllCommunities from "./pages/community/AllCommunities";
 
 const App = () => {
   const { setUser, setLoading } = useAuth();
@@ -58,6 +59,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/commuinties"
+          element={
+            <ProtectedRoute>
+              <AllCommunities />
             </ProtectedRoute>
           }
         />

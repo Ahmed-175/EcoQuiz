@@ -1,14 +1,17 @@
 package dto_community
 
-type Community struct {
-	ID                        string `json:"id"`
-	Name                      string `json:"name"`
-	Description               string `json:"description"`
-	Banner                    string `json:"banner"`
-	CreatorID                 string `json:"creator_id"`
-	AllowPublicQuizSubmission bool   `json:"allow_public_quiz_submission"`
-	CreatedAt                 string `json:"created_at"`
-	UpdatedAt                 string `json:"updated_at"`
+type CommunityDetailRes struct {
+	ID                        string   `json:"id"`
+	Name                      string   `json:"name"`
+	Description               string   `json:"description"`
+	Banner                    string   `json:"banner"`
+	Creator                   Creator  `json:"creator"`
+	AllowPublicQuizSubmission bool     `json:"allow_public_quiz_submission"`
+	NumberOfQuizzes           int      `json:"number_of_quizzes"`
+	CreatedAt                 string   `json:"created_at"`
+	MemberRole                string   `json:"member_role"` // "CREATOR", "ADMIN", "MEMBER", "NON_MEMBER"
+	Members                   []Member `json:"members"`
+	NumberOfMembers           int      `json:"number_of_members"`
 }
 
 type Member struct {
@@ -24,7 +27,6 @@ type Creator struct {
 	Username string  `json:"username"`
 	Avatar   *string `json:"avatar"`
 	Email    string  `json:"email"`
-	Role     string  `json:"role"`
 }
 
 type Quiz struct {
@@ -42,11 +44,11 @@ type Quiz struct {
 }
 
 type GetAllCommunitiesRes struct {
-	Communities *[]Community `json:"communities"`
+	Communities *[]CommunityDetailRes `json:"communities"`
 }
 
 type GetCommunityByIDRes struct {
-	Community Community `json:"community"`
-	Members   []Member  `json:"members"`
-	Quizzes   []Quiz    `json:"quizzes"`
+	Community CommunityDetailRes `json:"community"`
+	Members   []Member           `json:"members"`
+	Quizzes   []Quiz             `json:"quizzes"`
 }

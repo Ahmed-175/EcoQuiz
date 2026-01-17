@@ -8,13 +8,8 @@ import type {
 } from '../types/types';
 
 // Get all communities with optional filters
-export const getCommunities = async (params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    subject?: string;
-}): Promise<PaginatedResponse<Community>> => {
-    const response = await api.get('/communities', { params });
+export const getCommunities = async (): Promise<PaginatedResponse<Community>> => {
+    const response = await api.get('/communities');
     return response.data;
 };
 
@@ -25,9 +20,9 @@ export const getCommunity = async (id: string): Promise<Community> => {
 };
 
 // Create a new community
-export const createCommunity = async (data: CreateCommunityForm): Promise<Community> => {
+export const createCommunity = async (data: CreateCommunityForm): Promise<string> => {
     const response = await api.post('/communities', data);
-    return response.data.data;
+    return response.data;
 };
 
 // Update a community
@@ -93,3 +88,12 @@ export const checkMembership = async (communityId: string): Promise<{ isMember: 
     const response = await api.get(`/communities/${communityId}/membership`);
     return response.data.data;
 };
+export const uploadBannerCommunity = async (file : File): Promise<string>  =>{
+    const formData = new FormData();
+    formData.append("banner" , file)
+    const res = await api.post("/communities/upload-banner", formData , {
+        headers : {"Content-Type" : "multiparts/form-data" }
+    })
+
+    return res.data.url
+}

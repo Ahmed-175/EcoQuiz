@@ -9,10 +9,10 @@ import (
 
 func CommunityRoutes(rg *gin.RouterGroup, communityHandler *handlers.CommunityHandler, secretJWT string) {
 	community := rg.Group("/communities")
-	community.GET("/", communityHandler.GetAllCommunities)
+	community.GET("", communityHandler.GetAllCommunities)
 	community.Use(middleware.JWTAuth(secretJWT))
 	{
-		community.POST("/", communityHandler.CreateCommunity)
+		community.POST("", communityHandler.CreateCommunity)
 		community.GET("/:id", communityHandler.GetCommunityByID)
 		community.POST("/:id/join", communityHandler.JoinCommunity)
 		community.PUT("/:id/members/:userId/promote", communityHandler.PromoteMember)

@@ -32,7 +32,7 @@ export interface CommunityMember {
   community_id: string;
   user_id: string;
   user?: User;
-  role: 'creator' | 'admin' | 'member';
+  role: "creator" | "admin" | "member";
   joined_at: string;
 }
 
@@ -62,7 +62,7 @@ export interface Question {
   option_b: string;
   option_c: string;
   option_d: string;
-  correct_answer?: 'a' | 'b' | 'c' | 'd';
+  correct_answer?: "a" | "b" | "c" | "d";
   explanation?: string;
   order_index: number;
   created_at: string;
@@ -120,8 +120,7 @@ export interface PaginatedResponse<T> {
 export interface CreateCommunityForm {
   name: string;
   description: string;
-  subject: string;
-  is_public: boolean;
+  banner: string;
   allow_public_quiz_submission: boolean;
 }
 
@@ -139,7 +138,7 @@ export interface CreateQuestionForm {
   option_b: string;
   option_c: string;
   option_d: string;
-  correct_answer: 'a' | 'b' | 'c' | 'd';
+  correct_answer: "a" | "b" | "c" | "d";
   explanation?: string;
 }
 
@@ -147,7 +146,7 @@ export interface SubmitQuizForm {
   quiz_id: string;
   answers: {
     question_id: string;
-    selected_option: 'a' | 'b' | 'c' | 'd';
+    selected_option: "a" | "b" | "c" | "d";
   }[];
   time_taken_seconds: number;
 }

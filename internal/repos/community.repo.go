@@ -26,6 +26,8 @@ type CommunityRepo interface {
 	FindMembersByUserID(ctx context.Context, userID string) ([]models.Community, error)
 	FindMembersByRoles(ctx context.Context, commID string, roles []string) ([]models.User, error)
 	FindMembersWithRole(ctx context.Context, commID string) ([]dto_community.Member, error)
+	CountMembers(ctx context.Context, commID string) (int, error)
+	CountQuizzes(ctx context.Context, commID string) (int, error)
 }
 
 type communityRepo struct {
@@ -327,7 +329,6 @@ func (r *communityRepo) UserRole(
 
 	return role, nil
 }
-
 func (r *communityRepo) FindMembersWithRole(ctx context.Context, commID string) ([]dto_community.Member, error) {
 	query := `
 		SELECT u.id, u.username, u.email, u.avatar, cm.role
@@ -350,4 +351,16 @@ func (r *communityRepo) FindMembersWithRole(ctx context.Context, commID string) 
 		members = append(members, m)
 	}
 	return members, nil
+}
+func (r *communityRepo) CountMembers(ctx context.Context, commID string) (int, error) {
+	query := `SELECT COUNT(*) FROM community_members WHERE community_id = $1`
+	var count int
+	err := r.db.QueryRow(ctx, query, commID).Scan(&count)
+	return count, err
+}
+func (r *communityRepo) CountQuizzes(ctx context.Context, commID string) (int, error) {
+	query := `SELECT COUNT(*) FROM quizzes WHERE community_id = $1 AND is_published = true`
+	var count int
+	err := r.db.QueryRow(ctx, query, commID).Scan(&count)
+	return count, err
 }
