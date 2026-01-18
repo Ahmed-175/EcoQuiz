@@ -12,7 +12,7 @@ const sections = [
   {
     name: "Members",
     icon: FaUsers,
-    id: "followers",
+    id: "Members",
     color: "text-emerald-600",
     activeColor: "bg-emerald-600",
   },

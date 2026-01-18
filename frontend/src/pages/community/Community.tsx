@@ -11,6 +11,7 @@ import { IoCalendarOutline } from "react-icons/io5";
 import IsJoin from "../../components/community/IsJoin";
 import StateSection from "./StateSection";
 import QuizzesSection from "./QuizzesSection";
+import MembersSection from "../../components/community/MembersSection";
 
 const Community = () => {
   const [community, setCommunity] = useState<CommunityDetails>();
@@ -19,6 +20,8 @@ const Community = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [roleMember, setRoleMember] = useState<string>("NON_MEMBER");
   const { id } = useParams();
+
+  console.log(members);
   useEffect(() => {
     const fetchCommunity = async () => {
       try {
@@ -83,6 +86,7 @@ const Community = () => {
         stateSection={stateSection}
       />
       {stateSection == "Quizzes" && <QuizzesSection quizzes={quizzes} />}
+      {stateSection == "Members" && <MembersSection members={members} />}
     </div>
   );
 };
