@@ -19,7 +19,7 @@ const CreateCommunity = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleUploadBannerForCommunity = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -82,7 +82,7 @@ const CreateCommunity = () => {
         setError(error.response.data.message);
       } else if (error.message?.includes("Network Error")) {
         setError(
-          "Failed to connect to the server. Please check your internet connection"
+          "Failed to connect to the server. Please check your internet connection",
         );
       } else {
         setError("An error occurred while creating the community");

@@ -11,6 +11,8 @@ import Settings from "./pages/community/Settings";
 import Community from "./pages/community/Community";
 import Header from "./components/header/Header";
 import Into from "./pages/Into";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
 import { useEffect } from "react";
@@ -50,6 +52,22 @@ const App = () => {
             </PublicRoute>
           }
         />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
         <Route path="/search" element={<Search />} />
         <Route path="/community/:id" element={<Community />} />
         <Route path="/quiz/:id" element={<Quiz />} />
@@ -64,7 +82,7 @@ const App = () => {
         />
 
         <Route
-          path="/commuinties"
+          path="/communities"
           element={
             <ProtectedRoute>
               <AllCommunities />

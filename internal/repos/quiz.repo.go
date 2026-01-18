@@ -35,6 +35,7 @@ type QuizRepo interface {
 	HasLiked(ctx context.Context, quizID, userID string) (bool, error)
 	FindQuizzesByCommunityIDWithCount(ctx context.Context, communityID string) ([]dto_community.Quiz, error)
 	GetQuizLeaderboard(ctx context.Context, quizID string) ([]dto_quiz.LeaderboardEntry, error)
+	IsLike(ctx context.Context, quizID, userId string) (bool, error)
 }
 
 type quizRepo struct {
@@ -632,4 +633,21 @@ func (r *quizRepo) GetQuizLeaderboard(ctx context.Context, quizID string) ([]dto
 	}
 
 	return leaderboard, nil
+}
+
+func (r *quizRepo) IsLike(ctx context.Context, quizID, userID string) (bool, error) {
+	query := `
+		SELECT COUNT(1)
+		FROM quiz_likes
+		WHERE quiz_id = $1 AND user_id = $2
+	`
+
+	var count int
+
+	err := r.db.QueryRow(ctx, query, quizID, userID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }

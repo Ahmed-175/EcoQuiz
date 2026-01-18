@@ -6,6 +6,7 @@ import (
 	"ecoquiz/internal/repos"
 	"ecoquiz/internal/utils"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -80,8 +81,11 @@ func (s *CommunityService) GetAllCommunities(ctx context.Context, userID string)
 
 		// Fetch User Role
 		community.MemberRole = "NON_MEMBER"
+
+		fmt.Println("user id : " + userID)
 		if userID != "" {
 			role, err := s.communityRepo.UserRole(ctx, c.ID, userID)
+
 			if err == nil {
 				switch role {
 				case "creator":
@@ -166,14 +170,20 @@ func (s *CommunityService) GetCommunityByID(
 	if err != nil {
 		return nil, errors.New("failed to get community members")
 	}
-	res.Members = members           // Keep for backward compatibility if needed in GetCommunityByIDRes
-	res.Community.Members = members // New field in CommunityDetailRes
+	res.Community.Members = members
 
 	quizzes, err := s.quizRepo.FindQuizzesByCommunityIDWithCount(ctx, commID)
+	for i , q := range quizzes {
+		quizzes[i].IsLike, _ = s.quizRepo.IsLike(ctx, q.ID, userID)
+	}
 	if err != nil {
 		return nil, errors.New("failed to get community quizzes")
 	}
-	res.Quizzes = quizzes
+	if quizzes == nil {
+		res.Quizzes = []dto_community.Quiz{}
+	} else {
+		res.Quizzes = quizzes
+	}
 
 	return res, nil
 }

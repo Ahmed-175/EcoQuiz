@@ -47,7 +47,6 @@ const Avatar: React.FC<AvatarProps> = ({
     return colors[index];
   };
 
-  console.log(avatar);
 
   const getInitials = () => {
     if (user.username) {
@@ -101,7 +100,6 @@ const Avatar: React.FC<AvatarProps> = ({
       >
         {user.avatar ? (
           <img
-            // src={`${import.meta.env.VITE_API_BASE_URL}/${user.avatar}`}
             src={avatar}
             alt={getDisplayName()}
             className="w-full h-full rounded-full object-cover"
@@ -109,7 +107,7 @@ const Avatar: React.FC<AvatarProps> = ({
           />
         ) : (
           <div
-            className={`w-full h-full rounded-full bg-gradient-to-r ${gradient} flex items-center justify-center text-white font-semibold ${config.text}`}
+            className={`w-full h-full rounded-full bg-linear-to-r ${gradient} flex items-center justify-center text-white font-semibold ${config.text}`}
           >
             {getInitials()}
           </div>

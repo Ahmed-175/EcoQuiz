@@ -1,7 +1,25 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import NotCommunites from "../../components/community/NotCommunites";
+import { getCommunities } from "../../services/communityService";
+import CommunityCard from "../../components/community/CommunityCard";
 
 const AllCommunities = () => {
+  const [communities, setCommuities] = useState<CommunityCard[]>([]);
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        const res = await getCommunities();
+        setCommuities(res.communities);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchCommunities();
+  }, []);
 
+  if (communities.length === 0) {
+    return <NotCommunites />;
+  }
   return (
     <div className="md:w-[80%] w-full min-h-screen  mx-auto pt-28">
       <div className=" text-4xl  font-extrabold mx-auto w-fit">
@@ -18,9 +36,11 @@ const AllCommunities = () => {
         ommunities.
       </div>
 
-    <div className="w-full mt-2 bg-amber-200 h-fit">
-      
-    </div>
+      <div className="w-full mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 p-4">
+        {communities.map((c, i) => (
+          <CommunityCard community={c} key={i} />
+        ))}
+      </div>
     </div>
   );
 };

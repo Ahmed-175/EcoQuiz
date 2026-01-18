@@ -59,7 +59,7 @@ export const togglePublishQuiz = async (id: string, publish: boolean): Promise<Q
 };
 
 // Like a quiz
-export const likeQuiz = async (id: string): Promise<ApiResponse<{ likes_count: number }>> => {
+export const likeQuiz = async (id: string): Promise<any> => {
     const response = await api.post(`/quizzes/${id}/like`);
     return response.data;
 };

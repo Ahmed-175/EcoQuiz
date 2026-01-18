@@ -8,15 +8,15 @@ import type {
 } from '../types/types';
 
 // Get all communities with optional filters
-export const getCommunities = async (): Promise<PaginatedResponse<Community>> => {
+export const getCommunities = async (): Promise<any> => {
     const response = await api.get('/communities');
     return response.data;
 };
 
 // Get a single community by ID
-export const getCommunity = async (id: string): Promise<Community> => {
+export const getCommunity = async (id: string): Promise<any> => {
     const response = await api.get(`/communities/${id}`);
-    return response.data.data;
+    return response.data;
 };
 
 // Create a new community
@@ -38,7 +38,7 @@ export const deleteCommunity = async (id: string): Promise<ApiResponse<null>> =>
 };
 
 // Join a community
-export const joinCommunity = async (id: string): Promise<ApiResponse<CommunityMember>> => {
+export const joinCommunity = async (id: string): Promise<any> => {
     const response = await api.post(`/communities/${id}/join`);
     return response.data;
 };

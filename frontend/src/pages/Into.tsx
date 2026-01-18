@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { baseUrl } from "../utils/baseUrl";
 import {
@@ -12,14 +12,9 @@ import Loading from "../components/Loading";
 
 const Intro = () => {
   const { user, loading } = useAuth();
-  const nativate = useNavigate();
 
   if (loading) {
     return <Loading />;
-  }
-
-  if (user) {
-    nativate("/home");
   }
   const features = [
     {
@@ -90,26 +85,28 @@ const Intro = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               {!user ? (
-                <Link
-                  to={`${baseUrl}/auth/google`}
-                  className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-200 hover:scale-[1.02] transition-all duration-300"
-                >
-                  <div className="w-6 h-6 bg-white rounded-full p-1">
-                    <img
-                      src="./google-icon-logo-png-transparent.png"
-                      alt="google"
-                      className="w-full h-full"
-                    />
-                  </div>
-                  <span>Get Started with Google</span>
-                  <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                </Link>
+                <>
+                  <Link
+                    to="/login"
+                    className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-200 hover:scale-[1.02] transition-all duration-300"
+                  >
+                    <span>Get Started</span>
+                    <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-gray-800 font-semibold rounded-xl border-2 border-zinc-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-300"
+                  >
+                    <span className="text-emerald-600">Register Now</span>
+                    <FiArrowRight className="text-emerald-600" />
+                  </Link>
+                </>
               ) : (
                 <Link
-                  to="/dashboard"
+                  to="/home"
                   className="group inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-green-200 hover:scale-[1.02] transition-all duration-300"
                 >
-                  <span>Go to Dashboard</span>
+                  <span>Go to Home</span>
                   <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               )}
