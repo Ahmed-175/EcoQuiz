@@ -7,7 +7,9 @@ import Avatar from "../Avatar";
 const Header = () => {
   const user = useAuth()?.user;
   const location = useLocation();
+  const last = location.pathname.split("/")[3]
 
+  if (last == "take") return;
   return (
     <div className="fixed bg-white  z-30 rounded-b-2xl w-full h-20 flex justify-between items-center px-6 md:px-16">
       {/* LOGO */}
@@ -42,19 +44,17 @@ const Header = () => {
       {/* USER SECTION */}
       <div className="flex-1 flex justify-end">
         {user ? (
-       (
-            <Link to={"/profile"}>
-              <div className="flex items-center gap-3">
-                <Avatar user={user} size="lg" />
-                <div className="">
-                  <div className="text-sm font-medium text-gray-700">
-                    {user.username.toUpperCase() || user.email?.split("@")[0]}
-                  </div>
-                  <div className="text-xs text-gray-500">{user.email}</div>
+          <Link to={"/profile"}>
+            <div className="flex items-center gap-3">
+              <Avatar user={user} size="lg" />
+              <div className="">
+                <div className="text-sm font-medium text-gray-700">
+                  {user.username.toUpperCase() || user.email?.split("@")[0]}
                 </div>
+                <div className="text-xs text-gray-500">{user.email}</div>
               </div>
-            </Link>
-          )
+            </div>
+          </Link>
         ) : (
           <Link
             to={`${baseUrl}/auth/google`}

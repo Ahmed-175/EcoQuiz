@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { getCommunity, joinCommunity } from "../../services/communityService";
 import type {
@@ -14,79 +14,113 @@ import QuizzesSection from "./QuizzesSection";
 import MembersSection from "../../components/community/MembersSection";
 
 const Community = () => {
-  const [community, setCommunity] = useState<CommunityDetails>();
-  const [stateSection, setStateSection] = useState("Quizzes");
+  const { id } = useParams();
+
+  const [community, setCommunity] = useState<CommunityDetails | null>(null);
+  const [activeSection, setActiveSection] = useState<"Quizzes" | "Members">(
+    "Quizzes",
+  );
   const [quizzes, setQuizzes] = useState<Quizzes[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [roleMember, setRoleMember] = useState<string>("NON_MEMBER");
-  const { id } = useParams();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  console.log(members);
-  useEffect(() => {
-    const fetchCommunity = async () => {
-      try {
-        const res = await getCommunity(id as any);
-        console.log(res);
-        setCommunity(res.community);
-        !quizzes ? setQuizzes([]) : setQuizzes(res.quizzes);
-        setMembers(res.community.members);
-        setRoleMember(res.community.member_role);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchCommunity();
-  }, []);
+  // Fetch community data
+  const fetchCommunity = useCallback(async () => {
+    if (!id) return;
 
-  const handleJoinAndLeaveCommunity = async () => {
     try {
-      const res = await joinCommunity(id as any);
-      if (res.status == "joined") return setRoleMember("MEMBER");
-      if (res.status == "left") return setRoleMember("NON_MEMBER");
+      setIsLoading(true);
+      const res = await getCommunity(id);
+
+      setCommunity(res.community);
+      setQuizzes(res.quizzes || []);
+      setMembers(res.community.members || []);
+      setRoleMember(res.community.member_role);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch community:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchCommunity();
+  }, [fetchCommunity]);
+
+  // Join or leave community
+  const handleJoinAndLeaveCommunity = async () => {
+    if (!id) return;
+
+    try {
+      const res = await joinCommunity(id);
+
+      if (res.status === "joined") {
+        setRoleMember("MEMBER");
+      }
+
+      if (res.status === "left") {
+        setRoleMember("NON_MEMBER");
+      }
+    } catch (error) {
+      console.error("Join/Leave failed:", error);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!community) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center">
+        Community not found
+      </div>
+    );
+  }
+
   return (
-    <div className=" md:w-[80%] w-full  mx-auto min-h-screen pt-20 ">
-      <div className=" relative w-full h-75 overflow-hidden">
+    <div className="relative md:w-[80%] w-full mx-auto min-h-screen pt-20">
+      {/* Banner */}
+      <div className="relative w-full h-75 overflow-hidden">
         <img
-          src={`${baseUrl}${community?.banner}`}
-          alt=""
-          className="w-full h-full 
-        object-cover rounded-b-2xl"
+          src={`${baseUrl}${community.banner}`}
+          alt={community.name}
+          className="w-full h-full object-cover rounded-b-2xl"
         />
-        <div
-          className=" absolute w-full h-full left-0 bottom-0 bg-linear-to-t 
-        from-black to-transparent rounded-b-2xl"
-        ></div>
-        <div className=" absolute w-full left-0 bottom-3 p-3 px-7 flex justify-between items-center ">
+
+        <div className="absolute inset-0 bg-linear-to-t from-black to-transparent rounded-b-2xl" />
+
+        <div className="absolute w-full left-0 bottom-3 p-3 px-7 flex justify-between items-center">
           <div>
-            <div className="text-2xl text-white font-bold ">
-              {community?.name}
-            </div>
-            <div className="text-gray-200 flex justify-center items-center gap-3 w-fit">
-              {community?.created_at}
-              <IoCalendarOutline className="text-2xl" />
+            <h1 className="text-2xl text-white font-bold">{community.name}</h1>
+
+            <div className="text-gray-200 flex items-center gap-3">
+              {community.created_at}
+              <IoCalendarOutline className="text-xl" />
             </div>
           </div>
 
-          <div>
-            <IsJoin
-              roleMember={roleMember || "NON_MEMBER"}
-              onJoin={handleJoinAndLeaveCommunity}
-            />
-          </div>
+          <IsJoin
+            roleMember={roleMember}
+            onJoin={handleJoinAndLeaveCommunity}
+          />
         </div>
       </div>
 
+      {/* Sections */}
       <StateSection
-        setStateSection={setStateSection}
-        stateSection={stateSection}
+        setStateSection={setActiveSection}
+        stateSection={activeSection}
       />
-      {stateSection == "Quizzes" && <QuizzesSection quizzes={quizzes} />}
-      {stateSection == "Members" && <MembersSection members={members} />}
+
+      {activeSection === "Quizzes" && <QuizzesSection quizzes={quizzes} />}
+
+      {activeSection === "Members" && <MembersSection members={members} />}
     </div>
   );
 };

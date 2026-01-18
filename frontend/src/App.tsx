@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useParams } from "react-router-dom";
 import Home from "./pages/Home";
 import Search from "./pages/Search";
 import User from "./pages/User";
@@ -42,7 +42,7 @@ const App = () => {
 
   return (
     <>
-      <Header />
+      <Header  />
       <Routes>
         <Route
           path="/"

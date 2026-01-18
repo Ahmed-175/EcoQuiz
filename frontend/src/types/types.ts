@@ -160,3 +160,45 @@ export interface LeaderboardEntry {
   time_taken_seconds: number;
   completed_at: string;
 }
+
+
+export interface IQuiz {
+  id: string;
+  title: string;
+  description: string;
+  duration_minutes: string;
+  likes_count: number;
+  is_like: boolean;
+  is_new: boolean;
+  number_of_questions: number;
+  average_score: number;
+  students_count: number;
+  created_at: string;
+
+  community: {
+    id: string;
+    name: string;
+    banner: string;
+    is_joined: "MEMBER" | "NON_MEMBER";
+    created_at: string;
+  };
+
+  creator: {
+    id: string;
+    username: string;
+    email: string;
+    avatar: string | null;
+    role: string;
+  };
+}
+
+
+
+export type StatItem = {
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  iconColor: string;
+  description: string;
+  valueKey: keyof IQuiz;
+};

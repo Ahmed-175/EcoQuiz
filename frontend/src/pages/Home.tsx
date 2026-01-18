@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FiPlus, FiUsers } from 'react-icons/fi';
-import { useAuth } from '../hooks/useAuth';
-import Loading from '../components/Loading';
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { FiPlus, FiUsers } from "react-icons/fi";
+import { useAuth } from "../hooks/useAuth";
+import Loading from "../components/Loading";
 
-import type { Quiz, Community } from '../types/types';
-import { getRecommendedQuizzes, getTrendingQuizzes } from '../services/quizService';
-import { getRecommendedCommunities } from '../services/communityService';
+import type { Quiz, Community } from "../types/types";
+import {
+  getRecommendedQuizzes,
+  getTrendingQuizzes,
+} from "../services/quizService";
+import { getRecommendedCommunities } from "../services/communityService";
+import { PiShareNetworkBold } from "react-icons/pi";
 
 const Home = () => {
   const { user, loading: authLoading } = useAuth();
@@ -22,13 +26,13 @@ const Home = () => {
         const [recommended, trending, comms] = await Promise.all([
           getRecommendedQuizzes(),
           getTrendingQuizzes(),
-          getRecommendedCommunities()
+          getRecommendedCommunities(),
         ]);
         setRecommendedQuizzes(recommended);
         setTrendingQuizzes(trending);
         setCommunities(comms);
       } catch (error) {
-        console.error('Failed to fetch home data:', error);
+        console.error("Failed to fetch home data:", error);
       } finally {
         setLoading(false);
       }
@@ -47,24 +51,25 @@ const Home = () => {
         {/* Quick Actions */}
         <div className="flex justify-center items-center gap-4 mb-12">
           <Link
-            to="/quiz/create"
+            to="/communities"
             className="group  p-6 bg-linear-to-r from-cyan-500 to-blue-500 rounded-2xl text-white hover:shadow-xl hover:shadow-blue-200 transition-all duration-300 hover:-translate-y-1"
           >
-            <FiPlus className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-lg font-bold mb-1">Create Quiz</h3>
-            <p className="text-sm opacity-90">Share your knowledge with others</p>
+            <PiShareNetworkBold className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg font-bold mb-1">Communities</h3>
+            <p className="text-sm opacity-90">
+              Share your knowledge with others
+            </p>
           </Link>
-
+          
           <Link
             to="/community/create"
-            className="group p-6 bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-2xl text-white hover:shadow-xl hover:shadow-violet-200 transition-all duration-300 hover:-translate-y-1"
+            className="group p-6 bg-linear-to-r from-violet-500 to-fuchsia-500 rounded-2xl text-white hover:shadow-xl hover:shadow-violet-200 transition-all duration-300 hover:-translate-y-1"
           >
             <FiUsers className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
             <h3 className="text-lg font-bold mb-1">Create Community</h3>
             <p className="text-sm opacity-90">Build a learning community</p>
           </Link>
         </div>
-
       </div>
     </div>
   );

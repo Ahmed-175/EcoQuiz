@@ -32,14 +32,15 @@ type Creator struct {
 
 type QuizDetailResponse struct {
 	ID                string             `json:"id"`
-	Community         CommunityDetail    `json:"community_id"`
+	Community         CommunityDetail    `json:"community"`
 	Creator           Creator            `json:"creator"`
 	Title             string             `json:"title"`
 	Description       string             `json:"description"`
 	DurationMinutes   int                `json:"duration_minutes"`
 	LikesCount        int                `json:"likes_count"`
 	IsNew             bool               `json:"is_new"`
-	NumberOfQuestions int                `json:"number_of_questions"`
+	IsLike            bool               `json:"is_like"`
+ 	NumberOfQuestions int                `json:"number_of_questions"`
 	AverageScore      float64            `json:"average_score"`
 	StudentsCount     int                `json:"students_count"`
 	Leaderboard       []LeaderboardEntry `json:"leaderboard"`

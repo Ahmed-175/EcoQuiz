@@ -16,13 +16,13 @@ const sections = [
     color: "text-emerald-600",
     activeColor: "bg-emerald-600",
   },
-  {
-    name: "Settings",
-    icon: IoSettingsOutline,
-    id: "notifications",
-    color: "text-purple-600",
-    activeColor: "bg-purple-600",
-  },
+  // {
+  //   name: "Settings",
+  //   icon: IoSettingsOutline,
+  //   id: "notifications",
+  //   color: "text-purple-600",
+  //   activeColor: "bg-purple-600",
+  // },
 ];
 
 const StateSection = ({
@@ -33,15 +33,12 @@ const StateSection = ({
   setStateSection: any;
 }) => {
   return (
-    <div
-      className="mt-10 w-[70%] mx-auto px-6 flex justify-between
-     items-center gap-6 rounded-xl mb-10"
-    >
+    <div className=" fixed top-[50%] right-12 mt-10 w-fit mx-auto px-6 rounded-xl mb-10">
       {sections.map((sec) => (
         <button
           key={sec.id}
           onClick={() => setStateSection(sec.id)}
-          className={`flex flex-col items-center gap-2 p-3 cursor-pointer 
+          className={`flex flex-col mb-3 items-center gap-2 p-3 cursor-pointer 
               transition-all duration-200 ease-in-out  
               ${
                 stateSection === sec.id

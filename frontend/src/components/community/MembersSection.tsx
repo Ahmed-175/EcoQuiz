@@ -53,6 +53,7 @@ const MembersSection = ({ members }: { members: Member[] }) => {
           </div>
         </Link>
       ))}
+      
     </div>
   );
 };

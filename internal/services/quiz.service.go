@@ -410,6 +410,9 @@ func (s *QuizService) GetQuizByID(
 	// assuming quiz model doesn't have it, but we can get it from questionRepo or add a method.
 	// For now, let's use questionRepo.FindByQuizID length if efficient enough, or add a count method.
 	// Given requirements, let's just count them.
+
+	quizRes.IsLike, _ = s.quizRepo.IsLike(ctx, quizID, userID)
+
 	questions, err := s.questionRepo.FindByQuizID(ctx, quizID)
 	if err == nil {
 		quizRes.NumberOfQuestions = len(questions)
@@ -434,7 +437,7 @@ func (s *QuizService) GetQuizByID(
 		role, err := s.communityRepo.UserRole(ctx, community.ID, userID)
 		if err != nil {
 			if err == pgx.ErrNoRows {
-				quizRes.Community.IsJoined = "NOT_JOINED"
+				quizRes.Community.IsJoined = "NON_MEMBER"
 			} else {
 				return nil, errors.New("failed to check community membership")
 			}
@@ -442,7 +445,7 @@ func (s *QuizService) GetQuizByID(
 			if role == "creator" {
 				quizRes.Community.IsJoined = "CREATOR"
 			} else {
-				quizRes.Community.IsJoined = "JOINED"
+				quizRes.Community.IsJoined = "MEMBER"
 			}
 		}
 	}

@@ -23,15 +23,15 @@ export const getQuizzes = async (params?: {
 };
 
 // Get a single quiz by ID
-export const getQuiz = async (id: string): Promise<Quiz> => {
+export const getQuiz = async (id: string): Promise<any> => {
     const response = await api.get(`/quizzes/${id}`);
-    return response.data.data;
+    return response.data;
 };
 
 // Get quiz with questions (for taking)
-export const getQuizForTaking = async (id: string): Promise<{ quiz: Quiz; questions: Question[] }> => {
+export const getQuizForTaking = async (id: string): Promise<any> => {
     const response = await api.get(`/quizzes/${id}/take`);
-    return response.data.data;
+    return response.data;
 };
 
 // Create a new quiz
@@ -89,9 +89,9 @@ export const startQuizAttempt = async (quizId: string): Promise<{ attempt_id: st
 };
 
 // Submit quiz answers
-export const submitQuizAttempt = async (data: SubmitQuizForm): Promise<QuizAttempt> => {
-    const response = await api.post(`/quizzes/${data.quiz_id}/submit`, data);
-    return response.data.data;
+export const submitQuizAttempt = async ( quiz_id: string , data : any): Promise<any> => {
+    const response = await api.post(`/quizzes/${quiz_id}/submit`, data);
+    return response.data;
 };
 
 // Get quiz attempts for a user
