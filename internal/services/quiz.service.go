@@ -8,6 +8,7 @@ import (
 	"ecoquiz/internal/repos"
 	"ecoquiz/internal/utils"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -401,7 +402,6 @@ func (s *QuizService) GetQuizByID(
 		DurationMinutes:   quiz.DurationMinutes,
 		LikesCount:        quiz.LikesCount,
 		AverageScore:      quiz.AverageScore,
-		StudentsCount:     quiz.StudentsCount,
 		NumberOfQuestions: 0, // Needs a repo method to get actual count if not in quiz model, or additional query
 		CreatedAt:         utils.FormatTime(quiz.CreatedAt),
 		IsNew:             utils.IsNew(quiz.CreatedAt),
@@ -476,6 +476,8 @@ func (s *QuizService) GetQuizByID(
 		return nil, errors.New("failed to get leaderboard: " + err.Error())
 	}
 	quizRes.Leaderboard = leaderboard
+	fmt.Println(leaderboard)
+	quizRes.StudentsCount = len(leaderboard)
 
 	return quizRes, nil
 }

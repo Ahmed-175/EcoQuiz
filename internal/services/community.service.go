@@ -176,7 +176,7 @@ func (s *CommunityService) GetCommunityByID(
 	for i , q := range quizzes {
 		quizzes[i].IsLike, _ = s.quizRepo.IsLike(ctx, q.ID, userID)
 	}
-	if err != nil {
+	if err != nil{
 		return nil, errors.New("failed to get community quizzes")
 	}
 	if quizzes == nil {

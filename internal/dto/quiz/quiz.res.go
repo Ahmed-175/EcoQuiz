@@ -40,7 +40,7 @@ type QuizDetailResponse struct {
 	LikesCount        int                `json:"likes_count"`
 	IsNew             bool               `json:"is_new"`
 	IsLike            bool               `json:"is_like"`
- 	NumberOfQuestions int                `json:"number_of_questions"`
+	NumberOfQuestions int                `json:"number_of_questions"`
 	AverageScore      float64            `json:"average_score"`
 	StudentsCount     int                `json:"students_count"`
 	Leaderboard       []LeaderboardEntry `json:"leaderboard"`
@@ -56,10 +56,11 @@ type CommunityDetail struct {
 }
 
 type LeaderboardEntry struct {
-	AttemptID   string  `json:"attempt_id"`
-	Score       float64 `json:"score"`
-	SubmittedAt string  `json:"submitted_at"`
-	User        User    `json:"user"`
+	AttemptID        string  `json:"attempt_id"`
+	TimeTakenMinutes int     `json:"time_taken_minutes"`
+	Score            float64 `json:"score"`
+	SubmittedAt      string  `json:"submitted_at"`
+	User             User    `json:"user"`
 }
 
 type User struct {

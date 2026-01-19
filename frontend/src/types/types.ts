@@ -161,7 +161,6 @@ export interface LeaderboardEntry {
   completed_at: string;
 }
 
-
 export interface IQuiz {
   id: string;
   title: string;
@@ -190,9 +189,22 @@ export interface IQuiz {
     avatar: string | null;
     role: string;
   };
+
+  leaderboard:attempt[];
 }
 
-
+interface attempt {
+  attempt_id: string;
+  time_taken_minutes: number;
+  score: number;
+  submitted_at: string;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    avatar: string;
+  };
+}
 
 export type StatItem = {
   label: string;

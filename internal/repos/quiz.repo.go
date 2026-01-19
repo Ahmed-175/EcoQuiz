@@ -595,6 +595,7 @@ func (r *quizRepo) GetQuizLeaderboard(ctx context.Context, quizID string) ([]dto
 	query := `
 		SELECT
 			qa.id,
+			qa.time_taken_minutes,
 			qa.score,
 			qa.completed_at,
 			u.id,
@@ -619,6 +620,7 @@ func (r *quizRepo) GetQuizLeaderboard(ctx context.Context, quizID string) ([]dto
 		var submittedAt time.Time
 		if err := rows.Scan(
 			&entry.AttemptID,
+			&entry.TimeTakenMinutes,
 			&entry.Score,
 			&submittedAt,
 			&entry.User.ID,
