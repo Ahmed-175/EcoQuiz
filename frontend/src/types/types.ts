@@ -7,6 +7,8 @@ export interface User {
   avatar: string;
   banner: string;
   google_id?: string;
+  attempts: any;
+  communities: any;
   created_at?: string;
   updated_at?: string;
 }

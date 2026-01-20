@@ -5,8 +5,15 @@ import { LuImageDown } from "react-icons/lu";
 import { uploadBanner } from "../../services/userService";
 import UsernameAndAvatarSection from "./UsernameAndAvatarSection";
 
+
+
+
+
+
+
 const InfoSectionProfile = () => {
   const { user, setUser, setLoading } = useAuth();
+  console.log(user);
 
   const handleUploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -24,7 +31,8 @@ const InfoSectionProfile = () => {
   };
 
   return (
-    <div className="relative w-full md:w-[80%] mx-auto h-75 rounded-b-lg">
+    <div className="relative w-full mx-auto h-75 rounded-b-lg">
+
       <img
         src={getBanner(user?.banner)}
         alt="banner"
@@ -48,6 +56,7 @@ const InfoSectionProfile = () => {
         <LuImageDown />
       </label>
       <UsernameAndAvatarSection />
+
     </div>
   );
 };

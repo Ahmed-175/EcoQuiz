@@ -25,7 +25,22 @@ func (h *UserHandler) Profile(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"errors": "User id is required"})
 		return
 	}
-	res , err := h.userService.Profile(c.Request.Context(), userID)
+	res, err := h.userService.Profile(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"res": res})
+}
+
+func (h *UserHandler) GetUser(c *gin.Context) {
+	userID := c.Param("userID")
+
+	if userID == ""{
+		c.JSON(http.StatusUnauthorized, gin.H{"errors": "User id is required"})
+		return
+	}
+	res, err := h.userService.Profile(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
 		return

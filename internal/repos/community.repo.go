@@ -5,7 +5,6 @@ import (
 	dto_community "ecoquiz/internal/dto/community"
 	"ecoquiz/internal/models"
 	"errors"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -366,6 +365,7 @@ func (r *communityRepo) FindUserCommunitiesWithDetails(ctx context.Context, user
 		SELECT 
 			c.id,
 			c.name,
+			c.creator_id,
 			cm.joined_at,
 			cm.role,
 			(SELECT COUNT(*) FROM community_members WHERE community_id = c.id) as member_count,
@@ -385,11 +385,11 @@ func (r *communityRepo) FindUserCommunitiesWithDetails(ctx context.Context, user
 	var communities []dto_community.UserCommunityDetail
 	for rows.Next() {
 		var c dto_community.UserCommunityDetail
-		var joinedAt time.Time
 		if err := rows.Scan(
 			&c.ID,
 			&c.Name,
-			&joinedAt,
+			&c.CreatorID,
+			&c.JoinedAt,
 			&c.Role,
 			&c.MemberCount,
 			&c.NumberOfQuizzes,
@@ -397,7 +397,6 @@ func (r *communityRepo) FindUserCommunitiesWithDetails(ctx context.Context, user
 		); err != nil {
 			return nil, err
 		}
-		c.JoinedAt = joinedAt.Format(time.RFC3339)
 		communities = append(communities, c)
 	}
 

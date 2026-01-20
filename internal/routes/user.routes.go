@@ -15,5 +15,6 @@ func UserRoutes(rg *gin.RouterGroup, userHandler *handlers.UserHandler, jwtSecre
 		users.PUT("/me", userHandler.UpdateUser)
 		users.PUT("/me/avatar", userHandler.UpdateAvatar)
 		users.PUT("/me/banner", userHandler.UpdateBanner)
+		users.GET("/:userID", userHandler.GetUser)
 	}
 }

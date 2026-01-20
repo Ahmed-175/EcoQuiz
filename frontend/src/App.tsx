@@ -145,7 +145,7 @@ const App = () => {
         />
 
         <Route
-          path="/profile/:id"
+          path="/user/:id"
           element={
             <ProtectedRoute>
               <User />

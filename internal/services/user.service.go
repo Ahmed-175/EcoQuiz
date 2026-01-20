@@ -48,12 +48,16 @@ func (s *UserService) Profile(ctx context.Context, userID string) (*dto_user.Pro
 			community := dto_user.Community{
 				ID:              c.ID,
 				Name:            c.Name,
-				JoinIn:          c.JoinedAt,
+				JoinIn:          utils.FormatTime(c.JoinedAt),
 				NumberOfQuizzes: c.NumberOfQuizzes,
 				Role:            c.Role,
 				MemberRole:      c.MemberRole,
 				MemberCount:     c.MemberCount,
 			}
+			creator, _ := s.userRepo.FindByID(ctx, c.CreatorID)
+			community.Creator.Email = creator.Email
+			community.Creator.ID = creator.ID
+
 			ProfileRes.Communities = append(ProfileRes.Communities, community)
 		}
 	}
@@ -72,7 +76,7 @@ func (s *UserService) Profile(ctx context.Context, userID string) (*dto_user.Pro
 				TimeTakenMinutes: a.TimeTakenMinutes,
 				AttemptNumber:    a.AttemptNumber,
 				Percentage:       int(a.Percentage),
-				CompletedAt:      a.CompletedAt,
+			CompletedAt:      a.CompletedAt,
 			}
 			ProfileRes.Attempts = append(ProfileRes.Attempts, attempt)
 		}

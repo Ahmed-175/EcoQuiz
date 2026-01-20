@@ -124,7 +124,7 @@ const Community = () => {
         <div className=" absolute  top-25 left-8 px-4 mb-4">
           <Link
             to={`/quiz/create?community=${id}`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-sm"
           >
             <FaPlus className="text-sm" />
             Create Quiz
