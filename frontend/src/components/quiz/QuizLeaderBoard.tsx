@@ -22,7 +22,7 @@ const QuizLeaderBoard = ({ quiz }: QuizActionsProps) => {
         </h1>
       </div>
 
-      {quiz.leaderboard.length === 0 ? (
+      {(!quiz.leaderboard || quiz.leaderboard.length === 0) ? (
         <div className="text-center py-12">
           <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
             <FaChartSimple className="text-3xl text-gray-400" />
@@ -73,15 +73,14 @@ const QuizLeaderBoard = ({ quiz }: QuizActionsProps) => {
                       <div className="flex items-center">
                         <span
                           className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-semibold
-                          ${
-                            i === 0
+                          ${i === 0
                               ? "bg-yellow-100 text-yellow-800"
                               : i === 1
                                 ? "bg-gray-100 text-gray-800"
                                 : i === 2
                                   ? "bg-orange-100 text-orange-800"
                                   : "bg-blue-50 text-gray-700"
-                          }`}
+                            }`}
                         >
                           {i + 1}
                         </span>
@@ -115,15 +114,14 @@ const QuizLeaderBoard = ({ quiz }: QuizActionsProps) => {
                       <div className="flex items-center gap-2">
                         <span
                           className={`font-semibold px-3 py-1 rounded-full text-sm
-                          ${
-                            l.score >= 90
+                          ${l.score >= 90
                               ? "bg-green-100 text-green-800"
                               : l.score >= 70
                                 ? "bg-blue-100 text-blue-800"
                                 : l.score >= 50
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-red-100 text-red-800"
-                          }`}
+                            }`}
                         >
                           {l.score}
                         </span>
@@ -149,7 +147,7 @@ const QuizLeaderBoard = ({ quiz }: QuizActionsProps) => {
           </table>
         </div>
       )}
-      
+
     </div>
   );
 };

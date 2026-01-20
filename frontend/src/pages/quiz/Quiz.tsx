@@ -1,5 +1,5 @@
 // Quiz.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getQuiz } from "../../services/quizService";
 import { joinCommunity } from "../../services/communityService";
@@ -62,7 +62,9 @@ const Quiz = () => {
       <p className="p-5">{quiz.description}</p>
       <QuizStatsDetail quiz={quiz} />
       <QuizActionsDetail quiz={quiz} />
-      <QuizLeaderBoard quiz={quiz} />
+      {quiz.leaderboard && quiz.leaderboard.length !== 0 && (
+        <QuizLeaderBoard quiz={quiz} />
+      )}
     </div>
   );
 };

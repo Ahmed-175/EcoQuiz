@@ -1,6 +1,7 @@
 package middleware
 
 import (
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -45,6 +46,7 @@ func JWTAuth(secret string) gin.HandlerFunc {
 
 		c.Set("userID", userID)
 		c.Set("email", email)
+
 
 		c.Next()
 	}

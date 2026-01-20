@@ -41,6 +41,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		"access_token",
 		jwtToken,
@@ -58,7 +59,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Password string `json:"password" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error":err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	fmt.Println(req)
@@ -67,6 +68,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		"access_token",
 		jwtToken,
@@ -116,6 +118,7 @@ func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		"access_token",
 		jwtToken,

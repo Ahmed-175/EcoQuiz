@@ -129,17 +129,21 @@ export interface CreateQuizForm {
   title: string;
   description: string;
   duration_minutes: number;
+  is_published: boolean;
   questions: CreateQuestionForm[];
 }
 
 export interface CreateQuestionForm {
   question_text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_answer: "a" | "b" | "c" | "d";
   explanation?: string;
+  correct_answer: string;
+  order_index: number;
+  options: CreateOptionForm[];
+}
+
+export interface CreateOptionForm {
+  text: string;
+  is_correct: boolean;
 }
 
 export interface SubmitQuizForm {
@@ -190,7 +194,7 @@ export interface IQuiz {
     role: string;
   };
 
-  leaderboard:attempt[];
+  leaderboard: attempt[];
 }
 
 interface attempt {

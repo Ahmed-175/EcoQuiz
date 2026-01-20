@@ -9,6 +9,7 @@ import (
 	"ecoquiz/internal/utils"
 	"errors"
 	"fmt"
+
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -128,20 +129,28 @@ func (s *QuizService) GetAllQuizzes(
 
 	for _, quiz := range quizzes {
 		var quizRes dto_quiz.QuizResponse
-
 		quizRes.ID = quiz.ID
 		quizRes.Title = quiz.Title
 		quizRes.Description = quiz.Description
-		quizRes.DurationMinutes = quiz.DurationMinutes
 		quizRes.LikesCount = quiz.LikesCount
-		quizRes.AverageScore = quiz.AverageScore
-		quizRes.StudentsCount = quiz.StudentsCount
 		quizRes.CreatedAt = utils.FormatTime(quiz.CreatedAt)
 
 		if utils.IsNew(quiz.CreatedAt) {
 			quizRes.IsNew = true
 		} else {
 			quizRes.IsNew = false
+		}
+		quizRes.IsLiked, _ = s.quizRepo.IsLike(ctx, quiz.ID, userID)
+		// Leaderboard
+		leaderboard, err := s.quizRepo.GetQuizLeaderboard(ctx, quiz.ID)
+		if err != nil {
+			return nil, errors.New("failed to get leaderboard: " + err.Error())
+		}
+		quizRes.StudentsCount = len(leaderboard)
+
+		questions, err := s.questionRepo.FindByQuizID(ctx, quiz.ID)
+		if err == nil {
+			quizRes.NumberOfQuestions = len(questions)
 		}
 
 		community, err := s.communityRepo.FindByID(ctx, quiz.CommunityID)
@@ -158,10 +167,11 @@ func (s *QuizService) GetAllQuizzes(
 		if userID == community.CreatorID {
 			quizRes.Community.IsJoined = "CREATOR"
 		} else {
-			role, err := s.communityRepo.UserRole(ctx, userID, community.ID)
+			role, err := s.communityRepo.UserRole(ctx, community.ID, userID)
+			fmt.Println(role)
 			if err != nil {
 				if err == pgx.ErrNoRows {
-					quizRes.Community.IsJoined = "NOT_JOINED"
+					quizRes.Community.IsJoined = "NON_MEMBER"
 				} else {
 					return nil, errors.New("failed to check community membership")
 				}
@@ -169,7 +179,7 @@ func (s *QuizService) GetAllQuizzes(
 				if role == "creator" {
 					quizRes.Community.IsJoined = "CREATOR"
 				} else {
-					quizRes.Community.IsJoined = "JOINED"
+					quizRes.Community.IsJoined = "MEMBER"
 				}
 			}
 		}
@@ -476,7 +486,6 @@ func (s *QuizService) GetQuizByID(
 		return nil, errors.New("failed to get leaderboard: " + err.Error())
 	}
 	quizRes.Leaderboard = leaderboard
-	fmt.Println(leaderboard)
 	quizRes.StudentsCount = len(leaderboard)
 
 	return quizRes, nil

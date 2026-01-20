@@ -2,13 +2,14 @@ package dto_quiz
 
 type QuizResponse struct {
 	ID                string    `json:"id"`
-	Community         Community `json:"community_id"`
+	Community         Community `json:"community"`
 	Creator           Creator   `json:"creator"`
 	Title             string    `json:"title"`
 	Description       string    `json:"description"`
 	DurationMinutes   int       `json:"duration_minutes"`
 	LikesCount        int       `json:"likes_count"`
 	IsNew             bool      `json:"is_new"`
+	IsLiked           bool       `json:"is_liked"`
 	NumberOfQuestions int       `json:"number_of_questions"`
 	AverageScore      float64   `json:"average_score"`
 	StudentsCount     int       `json:"students_count"`

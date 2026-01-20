@@ -11,8 +11,8 @@ func QuizRoutes(api *gin.RouterGroup, quizHandler *handlers.QuizHandler, jwtsecr
 	quizGroup := api.Group("/quizzes")
 	quizGroup.Use(middleware.JWTAuth(jwtsecret))
 	{
-		quizGroup.POST("/", quizHandler.CreateQuiz)
-		quizGroup.GET("/", quizHandler.GetAllQuizzes)
+		quizGroup.POST("", quizHandler.CreateQuiz)
+		quizGroup.GET("/get", quizHandler.GetAllQuizzes)
 		quizGroup.GET("/:id", quizHandler.GetQuizByID)
 		quizGroup.GET("/:id/take", quizHandler.TakeQuiz)
 		quizGroup.POST("/:id/submit", quizHandler.SubmitQuiz)

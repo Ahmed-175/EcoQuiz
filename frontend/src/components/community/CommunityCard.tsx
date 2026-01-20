@@ -11,7 +11,6 @@ import { LuNewspaper } from "react-icons/lu";
 type CommunityCardProp = {
   community: CommunityCard;
 };
-
 const CommunityCard = ({ community }: CommunityCardProp) => {
   const [roleMember, setRoleMember] = useState(community.member_role);
   const handleJoinAndLeaveCommunity = async () => {

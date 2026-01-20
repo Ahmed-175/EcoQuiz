@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useParams, Link } from "react-router-dom";
+import { FaPlus } from "react-icons/fa";
 import { getCommunity, joinCommunity } from "../../services/communityService";
 import type {
   CommunityDetails,
@@ -117,6 +118,19 @@ const Community = () => {
         setStateSection={setActiveSection}
         stateSection={activeSection}
       />
+
+      {/* Create Quiz Button - visible for members */}
+      {activeSection === "Quizzes" && roleMember !== "NON_MEMBER" && (
+        <div className=" absolute  top-25 left-8 px-4 mb-4">
+          <Link
+            to={`/quiz/create?community=${id}`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-sm"
+          >
+            <FaPlus className="text-sm" />
+            Create Quiz
+          </Link>
+        </div>
+      )}
 
       {activeSection === "Quizzes" && <QuizzesSection quizzes={quizzes} />}
 

@@ -1,36 +1,28 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FiPlus, FiUsers } from "react-icons/fi";
-import { useAuth } from "../hooks/useAuth";
 import Loading from "../components/Loading";
-
-import type { Quiz, Community } from "../types/types";
-import {
-  getRecommendedQuizzes,
-  getTrendingQuizzes,
-} from "../services/quizService";
-import { getRecommendedCommunities } from "../services/communityService";
-import { PiShareNetworkBold } from "react-icons/pi";
+import QuickActions from "../components/home/QuickActions";
+import HomeQuizCard from "../components/home/HomeQuizCard";
+import RecommendedCommunities from "../components/home/RecommendedCommunities";
+import { getQuizzes } from "../services/quizService";
+import { getCommunities } from "../services/communityService";
+import type { quizHome } from "../types/home.type";
+import type { CommunityCard } from "../types/community.type";
 
 const Home = () => {
-  const { user, loading: authLoading } = useAuth();
-  const [recommendedQuizzes, setRecommendedQuizzes] = useState<Quiz[]>([]);
-  const [trendingQuizzes, setTrendingQuizzes] = useState<Quiz[]>([]);
-  const [communities, setCommunities] = useState<Community[]>([]);
+  const [quizzes, setQuizzes] = useState<quizHome[]>([]);
+  const [communities, setCommunities] = useState<CommunityCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [recommended, trending, comms] = await Promise.all([
-          getRecommendedQuizzes(),
-          getTrendingQuizzes(),
-          getRecommendedCommunities(),
+        const [resQuizzes, resCommunities] = await Promise.all([
+          getQuizzes(),
+          getCommunities(),
         ]);
-        setRecommendedQuizzes(recommended);
-        setTrendingQuizzes(trending);
-        setCommunities(comms);
+        setQuizzes(resQuizzes.quizzes || []);
+        setCommunities(resCommunities.communities || []);
       } catch (error) {
         console.error("Failed to fetch home data:", error);
       } finally {
@@ -41,35 +33,31 @@ const Home = () => {
     fetchData();
   }, []);
 
-  if (authLoading || loading) {
+  if (loading) {
     return <Loading />;
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-blue-50 pt-24 pb-12">
-      <div className="container mx-auto px-4 md:px-8">
+    <div className="min-h-screen w-full bg-linear-to-br from-gray-50 via-white to-blue-50 pt-24 pb-12">
+      <div className="w-full md:w-[70%]  mx-auto px-4">
         {/* Quick Actions */}
-        <div className="flex justify-center items-center gap-4 mb-12">
-          <Link
-            to="/communities"
-            className="group  p-6 bg-linear-to-r from-cyan-500 to-blue-500 rounded-2xl text-white hover:shadow-xl hover:shadow-blue-200 transition-all duration-300 hover:-translate-y-1"
-          >
-            <PiShareNetworkBold className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-lg font-bold mb-1">Communities</h3>
-            <p className="text-sm opacity-90">
-              Share your knowledge with others
-            </p>
-          </Link>
-          
-          <Link
-            to="/community/create"
-            className="group p-6 bg-linear-to-r from-violet-500 to-fuchsia-500 rounded-2xl text-white hover:shadow-xl hover:shadow-violet-200 transition-all duration-300 hover:-translate-y-1"
-          >
-            <FiUsers className="w-8 h-8 mb-4 group-hover:scale-110 transition-transform" />
-            <h3 className="text-lg font-bold mb-1">Create Community</h3>
-            <p className="text-sm opacity-90">Build a learning community</p>
-          </Link>
+        <QuickActions />
+
+        <div className="space-y-6">
+          {quizzes.map((quiz) => (
+            <HomeQuizCard key={quiz.id} quiz={quiz} />
+          ))}
         </div>
+
+        {/* Empty state */}
+        {quizzes.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No quizzes available yet.</p>
+            <p className="text-gray-400 text-sm mt-2">
+              Create a quiz or join a community to get started!
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import (
 	"ecoquiz/internal/repos"
 	"ecoquiz/internal/utils"
 	"errors"
-	"fmt"
+
 
 	"github.com/jackc/pgx/v5"
 )
@@ -82,7 +82,6 @@ func (s *CommunityService) GetAllCommunities(ctx context.Context, userID string)
 		// Fetch User Role
 		community.MemberRole = "NON_MEMBER"
 
-		fmt.Println("user id : " + userID)
 		if userID != "" {
 			role, err := s.communityRepo.UserRole(ctx, c.ID, userID)
 
