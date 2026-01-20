@@ -2,7 +2,7 @@ package handlers
 
 import (
 	dto_user "ecoquiz/internal/dto/user"
-	"ecoquiz/internal/models"
+
 	"ecoquiz/internal/services"
 	"net/http"
 
@@ -25,13 +25,7 @@ func (h *UserHandler) Profile(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"errors": "User id is required"})
 		return
 	}
-
-	var user models.User
-
-	err := h.userService.Profile(c.Request.Context(), userID, &user)
-
-	res := dto_user.UserMapperResponse(&user)
-
+	res , err := h.userService.Profile(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
 		return

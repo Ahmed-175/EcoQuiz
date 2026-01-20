@@ -5,6 +5,7 @@ import (
 	dto_community "ecoquiz/internal/dto/community"
 	"ecoquiz/internal/models"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -28,6 +29,7 @@ type CommunityRepo interface {
 	FindMembersWithRole(ctx context.Context, commID string) ([]dto_community.Member, error)
 	CountMembers(ctx context.Context, commID string) (int, error)
 	CountQuizzes(ctx context.Context, commID string) (int, error)
+	FindUserCommunitiesWithDetails(ctx context.Context, userID string) ([]dto_community.UserCommunityDetail, error)
 }
 
 type communityRepo struct {
@@ -138,8 +140,7 @@ func (r *communityRepo) FindByID(ctx context.Context, id string) (*models.Commun
 
 func (r *communityRepo) FindByCreatorID(ctx context.Context, creatorID string) ([]models.Community, error) {
 	query := `
-		SELECT id, name, description, banner, creator_id,
-		       allow_public_quiz_submission, created_at, updated_at
+		SELECT id, name
 		FROM communities
 		WHERE creator_id = $1
 	`
@@ -156,12 +157,6 @@ func (r *communityRepo) FindByCreatorID(ctx context.Context, creatorID string) (
 		if err := rows.Scan(
 			&comm.ID,
 			&comm.Name,
-			&comm.Description,
-			&comm.Banner,
-			&comm.CreatorID,
-			&comm.AllowPublicQuizSubmission,
-			&comm.CreatedAt,
-			&comm.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -363,4 +358,48 @@ func (r *communityRepo) CountQuizzes(ctx context.Context, commID string) (int, e
 	var count int
 	err := r.db.QueryRow(ctx, query, commID).Scan(&count)
 	return count, err
+}
+
+// FindUserCommunitiesWithDetails returns all communities a user is a member of with full details
+func (r *communityRepo) FindUserCommunitiesWithDetails(ctx context.Context, userID string) ([]dto_community.UserCommunityDetail, error) {
+	query := `
+		SELECT 
+			c.id,
+			c.name,
+			cm.joined_at,
+			cm.role,
+			(SELECT COUNT(*) FROM community_members WHERE community_id = c.id) as member_count,
+			(SELECT COUNT(*) FROM quizzes WHERE community_id = c.id AND is_published = true) as quiz_count,
+			CASE WHEN c.creator_id = $1 THEN 'CREATOR' ELSE 'MEMBER' END as member_role
+		FROM communities c
+		JOIN community_members cm ON cm.community_id = c.id
+		WHERE cm.user_id = $1
+	`
+
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var communities []dto_community.UserCommunityDetail
+	for rows.Next() {
+		var c dto_community.UserCommunityDetail
+		var joinedAt time.Time
+		if err := rows.Scan(
+			&c.ID,
+			&c.Name,
+			&joinedAt,
+			&c.Role,
+			&c.MemberCount,
+			&c.NumberOfQuizzes,
+			&c.MemberRole,
+		); err != nil {
+			return nil, err
+		}
+		c.JoinedAt = joinedAt.Format(time.RFC3339)
+		communities = append(communities, c)
+	}
+
+	return communities, nil
 }

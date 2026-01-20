@@ -53,3 +53,14 @@ type GetCommunityByIDRes struct {
 	Community CommunityDetailRes `json:"community"`
 	Quizzes   []Quiz             `json:"quizzes"`
 }
+
+// UserCommunityDetail represents a community in the user profile
+type UserCommunityDetail struct {
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	JoinedAt        string `json:"joinedAt"`
+	NumberOfQuizzes int    `json:"numberOfQuizzes"`
+	Role            string `json:"role"`       // CREATOR - MEMBER - NON_MEMBER
+	MemberRole      string `json:"memberRole"` // Role assigned to member
+	MemberCount     int    `json:"memberCount"`
+}

@@ -36,6 +36,7 @@ type QuizRepo interface {
 	FindQuizzesByCommunityIDWithCount(ctx context.Context, communityID string) ([]dto_community.Quiz, error)
 	GetQuizLeaderboard(ctx context.Context, quizID string) ([]dto_quiz.LeaderboardEntry, error)
 	IsLike(ctx context.Context, quizID, userId string) (bool, error)
+	FindAttemptsByUserID(ctx context.Context, userID string) ([]dto_quiz.UserAttemptWithQuiz, error)
 }
 
 type quizRepo struct {
@@ -652,4 +653,51 @@ func (r *quizRepo) IsLike(ctx context.Context, quizID, userID string) (bool, err
 	}
 
 	return count > 0, nil
+}
+
+// FindAttemptsByUserID fetches all quiz attempts for a user with quiz details
+func (r *quizRepo) FindAttemptsByUserID(ctx context.Context, userID string) ([]dto_quiz.UserAttemptWithQuiz, error) {
+	query := `
+		SELECT 
+			qa.score,
+			qa.time_taken_minutes,
+			qa.attempt_number,
+			qa.percentage,
+			qa.completed_at,
+			q.id,
+			q.title,
+			(SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) as questions_count
+		FROM quiz_attempts qa
+		JOIN quizzes q ON qa.quiz_id = q.id
+		WHERE qa.user_id = $1
+		ORDER BY qa.completed_at DESC
+	`
+
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var attempts []dto_quiz.UserAttemptWithQuiz
+	for rows.Next() {
+		var a dto_quiz.UserAttemptWithQuiz
+		var completedAt time.Time
+		if err := rows.Scan(
+			&a.Score,
+			&a.TimeTakenMinutes,
+			&a.AttemptNumber,
+			&a.Percentage,
+			&completedAt,
+			&a.Quiz.ID,
+			&a.Quiz.Title,
+			&a.Quiz.QuestionsCount,
+		); err != nil {
+			return nil, err
+		}
+		a.CompletedAt = utils.FormatTime(completedAt)
+		attempts = append(attempts, a)
+	}
+
+	return attempts, nil
 }

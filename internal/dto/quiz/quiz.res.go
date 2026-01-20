@@ -9,7 +9,7 @@ type QuizResponse struct {
 	DurationMinutes   int       `json:"duration_minutes"`
 	LikesCount        int       `json:"likes_count"`
 	IsNew             bool      `json:"is_new"`
-	IsLiked           bool       `json:"is_liked"`
+	IsLiked           bool      `json:"is_liked"`
 	NumberOfQuestions int       `json:"number_of_questions"`
 	AverageScore      float64   `json:"average_score"`
 	StudentsCount     int       `json:"students_count"`
@@ -87,4 +87,21 @@ type QuestionTake struct {
 type OptionTake struct {
 	OptionID string `json:"option_id"`
 	Text     string `json:"text"`
+}
+
+// UserAttemptWithQuiz represents a quiz attempt with quiz details for profile
+type UserAttemptWithQuiz struct {
+	Quiz             QuizInfo `json:"quiz"`
+	Score            int      `json:"score"`
+	TimeTakenMinutes int      `json:"timeTakenMinutes"`
+	AttemptNumber    int      `json:"attemptNumber"`
+	Percentage       float64  `json:"percentage"`
+	CompletedAt      string   `json:"completedAt"`
+}
+
+// QuizInfo represents minimal quiz info for profile attempts
+type QuizInfo struct {
+	ID             string `json:"id"`
+	Title          string `json:"title"`
+	QuestionsCount int    `json:"questionsCount"`
 }

@@ -33,9 +33,9 @@ const UsernameAndAvatarSection = () => {
     <div className="absolute left-24 -bottom-24 flex justify-center items-center gap-3">
       <div className="relative">
         <img
-          src={`${baseUrl}${user?.avatar}`}
+          src={avatar}
           alt="avatar"
-          className="w-35 h-35 object-cover rounded-full border-4 border-white"
+          className="w-35 h-35 object-cover rounded-full border-4 bg-white border-white"
         />
         <input
           type="file"
