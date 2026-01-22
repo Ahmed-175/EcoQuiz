@@ -197,6 +197,7 @@ export interface IQuiz {
   };
 
   leaderboard: attempt[];
+  current_attempt_id?: string;
 }
 
 interface attempt {

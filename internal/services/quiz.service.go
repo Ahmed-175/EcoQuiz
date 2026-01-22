@@ -19,8 +19,9 @@ type QuizService struct {
 	quizRepo      repos.QuizRepo
 	questionRepo  repos.QuestionRepo
 	optionRepo    repos.OptionRepo
-	communityRepo repos.CommunityRepo
 	userRepo      repos.UserRepo
+	communityRepo repos.CommunityRepo
+	commentRepo   repos.CommentRepo
 }
 
 func NewQuizService(
@@ -29,6 +30,7 @@ func NewQuizService(
 	optionRepo repos.OptionRepo,
 	userRepo repos.UserRepo,
 	communityRepo repos.CommunityRepo,
+	commentRepo repos.CommentRepo,
 ) *QuizService {
 	return &QuizService{
 		quizRepo:      quizRepo,
@@ -36,6 +38,7 @@ func NewQuizService(
 		optionRepo:    optionRepo,
 		userRepo:      userRepo,
 		communityRepo: communityRepo,
+		commentRepo:   commentRepo,
 	}
 }
 
@@ -132,6 +135,9 @@ func (s *QuizService) GetAllQuizzes(
 		quizRes.ID = quiz.ID
 		quizRes.Title = quiz.Title
 		quizRes.Description = quiz.Description
+		quizRes.DurationMinutes = quiz.DurationMinutes
+		quizRes.AverageScore = quiz.AverageScore
+		quizRes.StudentsCount = quiz.StudentsCount
 		quizRes.LikesCount = quiz.LikesCount
 		quizRes.CreatedAt = utils.FormatTime(quiz.CreatedAt)
 
@@ -141,12 +147,6 @@ func (s *QuizService) GetAllQuizzes(
 			quizRes.IsNew = false
 		}
 		quizRes.IsLiked, _ = s.quizRepo.IsLike(ctx, quiz.ID, userID)
-		// Leaderboard
-		leaderboard, err := s.quizRepo.GetQuizLeaderboard(ctx, quiz.ID)
-		if err != nil {
-			return nil, errors.New("failed to get leaderboard: " + err.Error())
-		}
-		quizRes.StudentsCount = len(leaderboard)
 
 		questions, err := s.questionRepo.FindByQuizID(ctx, quiz.ID)
 		if err == nil {
@@ -294,6 +294,7 @@ func (s *QuizService) SubmitQuiz(
 		return "", errors.New("failed to check user attempts: " + err.Error())
 	}
 	isFirstAttempt := len(userAttempts) == 0
+	_ = isFirstAttempt // Suppress unused warning since it's not needed for stats anymore but kept for logic clarity if needed later
 
 	attempt := &models.QuizAttempts{
 		UserID:           userID,
@@ -335,26 +336,6 @@ func (s *QuizService) SubmitQuiz(
 
 	if err := s.quizRepo.UpdateAttempt(ctx, attempt, tx); err != nil {
 		return "", errors.New("failed to update user attempt: " + err.Error())
-	}
-
-	if isFirstAttempt {
-		quiz.StudentsCount++
-	}
-
-	allAttempts, err := s.quizRepo.FindAttemptByQuiz(ctx, quizID)
-	if err != nil {
-		return "", errors.New("failed to calculate average score: " + err.Error())
-	}
-
-	totalScore := 0
-	for _, a := range allAttempts {
-		totalScore += a.Score
-	}
-
-	quiz.AverageScore = float64(totalScore) / float64(len(allAttempts))
-
-	if err := s.quizRepo.Update(ctx, quiz); err != nil {
-		return "", errors.New("failed to update quiz stats: " + err.Error())
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -486,7 +467,151 @@ func (s *QuizService) GetQuizByID(
 		return nil, errors.New("failed to get leaderboard: " + err.Error())
 	}
 	quizRes.Leaderboard = leaderboard
+	quizRes.Leaderboard = leaderboard
 	quizRes.StudentsCount = len(leaderboard)
 
+	// Check for current attempt
+	attempts, err := s.quizRepo.FindAttemptByUser(ctx, quizID, userID)
+	if err == nil && len(attempts) > 0 {
+		// Assuming attempts are ordered or we pick the last one.
+		// Detailed logic depends on if multiple attempts are allowed or we just want the latest.
+		// For now, let's take the latest one (index 0 if ordered desc, or find max date).
+		// Assuming FindAttemptByUser returns all, let's pick the most recent.
+		// If repo doesn't order, we should might pick any or latest.
+		// Let's assume the repo returns them and we pick the first one which is usually the latest or we just pick one.
+		// Actually, let's just use the ID of the first one found for now.
+		lastAttemptID := attempts[0].ID
+		quizRes.CurrentAttemptID = &lastAttemptID
+	}
+
 	return quizRes, nil
+}
+
+func (s *QuizService) GetQuizResult(ctx context.Context, attemptID string) (*dto_quiz.QuizResultResponse, error) {
+	attempt, err := s.quizRepo.GetAttemptByID(ctx, attemptID)
+	if err != nil {
+		return nil, errors.New("failed to get attempt: " + err.Error())
+	}
+
+	quiz, err := s.quizRepo.FindByID(ctx, attempt.QuizID)
+	if err != nil {
+		return nil, errors.New("failed to get quiz: " + err.Error())
+	}
+
+	questions, err := s.questionRepo.FindByQuizID(ctx, attempt.QuizID)
+	if err != nil {
+		return nil, errors.New("failed to get questions: " + err.Error())
+	}
+
+	userAnswers, err := s.quizRepo.GetUserAnswersForAttempt(ctx, attemptID)
+	if err != nil {
+		return nil, errors.New("failed to get user answers: " + err.Error())
+	}
+
+	optionStats, err := s.quizRepo.GetOptionStatsForQuiz(ctx, attempt.QuizID)
+	if err != nil {
+		return nil, errors.New("failed to get option stats: " + err.Error())
+	}
+
+	allAttempts, _ := s.quizRepo.FindAttemptByQuiz(ctx, attempt.QuizID)
+	studentCount := len(allAttempts)
+	if studentCount == 0 {
+		studentCount = 1
+	}
+
+	result := &dto_quiz.QuizResultResponse{
+		AttemptID:        attempt.ID,
+		QuizID:           quiz.ID,
+		QuizTitle:        quiz.Title,
+		Score:            attempt.Score,
+		TotalQuestions:   attempt.TotalQuestions,
+		Percentage:       attempt.Percentage,
+		TimeTakenMinutes: attempt.TimeTakenMinutes,
+		CompletedAt:      utils.FormatTime(attempt.CompletedAt),
+		Questions:        make([]dto_quiz.QuestionResult, 0, len(questions)),
+	}
+
+	for _, q := range questions {
+		qRes := dto_quiz.QuestionResult{
+			QuestionID:    q.ID,
+			QuestionText:  q.QuestionText,
+			Explanation:   q.Explanation,
+			CorrectAnswer: q.CorrectAnswer,
+			UserAnswer:    nil,
+			Options:       make([]dto_quiz.OptionWithStats, 0),
+			Comments:      make([]dto_quiz.CommentRes, 0),
+		}
+
+		if ans, ok := userAnswers[q.ID]; ok {
+			qRes.UserAnswer = &ans
+		}
+
+		options, _ := s.optionRepo.GetByQuestionID(ctx, q.ID)
+		for _, o := range options {
+			count := optionStats[o.ID]
+			oStats := dto_quiz.OptionWithStats{
+				OptionID:       o.ID,
+				Text:           o.Text,
+				IsCorrect:      o.IsCorrect,
+				SelectionCount: count,
+				Percentage:     (float64(count) / float64(studentCount)) * 100,
+			}
+			if qRes.UserAnswer != nil && *qRes.UserAnswer == o.ID {
+				if o.IsCorrect {
+					qRes.IsCorrect = true
+				}
+			}
+			qRes.Options = append(qRes.Options, oStats)
+		}
+
+		comments, _ := s.commentRepo.GetCommentsByQuestionID(ctx, q.ID)
+		if comments == nil {
+			comments = make([]dto_quiz.CommentRes, 0)
+		}
+		qRes.Comments = comments
+
+		result.Questions = append(result.Questions, qRes)
+	}
+
+	return result, nil
+}
+
+func (s *QuizService) AddQuestion(ctx context.Context, quizID string, qReq *dto_quiz.Question) error {
+	tx, err := s.quizRepo.BeginTx(ctx)
+	if err != nil {
+		return errors.New("failed to start transaction")
+	}
+	defer tx.Rollback(ctx)
+
+	return s.addQuestionInternal(ctx, quizID, qReq, tx)
+}
+
+func (s *QuizService) addQuestionInternal(ctx context.Context, quizID string, qReq *dto_quiz.Question, tx pgx.Tx) error {
+	question := models.Question{
+		QuizID:        quizID,
+		QuestionText:  qReq.QuestionText,
+		Explanation:   qReq.Explanation,
+		CorrectAnswer: qReq.CorrectAnswer,
+		OrderIndex:    qReq.OrderIndex,
+	}
+
+	qs := []models.Question{question}
+	if err := s.questionRepo.CreateBatchTx(ctx, qs, tx); err != nil {
+		return errors.New("failed to create question: " + err.Error())
+	}
+
+	options := make([]models.Option, 0, len(qReq.Options))
+	for _, o := range qReq.Options {
+		options = append(options, models.Option{
+			QuestionID: qs[0].ID,
+			Text:       o.Text,
+			IsCorrect:  o.IsCorrect,
+		})
+	}
+
+	if err := s.optionRepo.CreateBatchTx(ctx, options, tx); err != nil {
+		return errors.New("failed to create options: " + err.Error())
+	}
+
+	return tx.Commit(ctx)
 }

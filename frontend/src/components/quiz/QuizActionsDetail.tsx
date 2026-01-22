@@ -1,6 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { FaHeart, FaRegArrowAltCircleRight } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import { FaEye, FaHeart, FaRegArrowAltCircleRight } from "react-icons/fa";
 import { useQuizLike } from "../../hooks/useQuizLike";
 import type { IQuiz } from "../../types/types";
 
@@ -14,6 +14,7 @@ const QuizActionsDetail = ({ quiz }: QuizActionsProps) => {
     quiz.likes_count,
     quiz.is_like,
   );
+  const navigate = useNavigate();
 
   return (
     <div className="w-full h-auto z-50 flex items-center justify-between p-4 rounded-2xl">
@@ -27,14 +28,24 @@ const QuizActionsDetail = ({ quiz }: QuizActionsProps) => {
           }`}
         >
           <FaHeart
-            className={`text-lg ${
-              isLiked ? "text-red-500 " : "text-gray-500"
-            }`}
+            className={`text-lg ${isLiked ? "text-red-500 " : "text-gray-500"}`}
           />
           <span className="font-semibold">{likesCount}</span>
           <span className="hidden sm:inline text-sm ml-1">Likes</span>
         </button>
       </div>
+
+      {quiz.current_attempt_id && (
+        <div className="">
+          <button
+            onClick={() => navigate(`/quiz/${quiz.current_attempt_id}/results`)}
+            className="flex items-center gap-2 bg-linear-to-r from-cyan-500 to-blue-500
+            px-4 py-2 rounded-full cursor-pointer text-white"
+          >
+            <FaEye /> View My Result
+          </button>
+        </div>
+      )}
 
       <Link
         to={`/quiz/${quiz.id}/take`}

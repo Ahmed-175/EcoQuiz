@@ -128,7 +128,7 @@ const Take = () => {
       };
 
       const result = await submitQuizAttempt(quizQ.quiz_id, submitData);
-      navigate(`/quiz/${result?.result as any}/result`);
+      navigate(`/quiz/${result.result}/results`);
     } catch (error) {
       console.error("Failed to submit quiz:", error);
       setIsSubmitting(false);
@@ -211,13 +211,12 @@ const Take = () => {
                   <button
                     key={question.question_id}
                     onClick={() => goToQuestion(index)}
-                    className={`h-10 rounded-lg flex items-center justify-center font-semibold ${
-                      currentIndex === index
-                        ? "bg-blue-600 text-white"
-                        : answers[question.question_id]
-                          ? "bg-green-100 text-green-700 border border-green-300"
-                          : "bg-gray-100 text-gray-700"
-                    }`}
+                    className={`h-10 rounded-lg flex items-center justify-center font-semibold ${currentIndex === index
+                      ? "bg-blue-600 text-white"
+                      : answers[question.question_id]
+                        ? "bg-green-100 text-green-700 border border-green-300"
+                        : "bg-gray-100 text-gray-700"
+                      }`}
                   >
                     {index + 1}
                   </button>
@@ -278,20 +277,18 @@ const Take = () => {
                         option.option_id,
                       )
                     }
-                    className={`p-4 rounded-lg border cursor-pointer ${
-                      answers[currentQuestion.question_id] === option.option_id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
+                    className={`p-4 rounded-lg border cursor-pointer ${answers[currentQuestion.question_id] === option.option_id
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
+                      }`}
                   >
                     <div className="flex items-center gap-4">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          answers[currentQuestion.question_id] ===
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${answers[currentQuestion.question_id] ===
                           option.option_id
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-700"
+                          }`}
                       >
                         {String.fromCharCode(65 + index)}
                       </div>
@@ -300,8 +297,8 @@ const Take = () => {
                       </div>
                       {answers[currentQuestion.question_id] ===
                         option.option_id && (
-                        <FaCheckCircle className="text-blue-500" />
-                      )}
+                          <FaCheckCircle className="text-blue-500" />
+                        )}
                     </div>
                   </div>
                 ))}

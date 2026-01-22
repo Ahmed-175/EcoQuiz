@@ -10,9 +10,12 @@ import QuizCreator from "../../components/quiz/QuizCreator";
 import QuizStatsDetail from "../../components/quiz/QuizStatsDetail";
 import QuizActionsDetail from "../../components/quiz/QuizActionsDetail";
 import QuizLeaderBoard from "../../components/quiz/QuizLeaderBoard";
+import { useNavigate } from "react-router-dom";
+import { FaEye } from "react-icons/fa";
 
 const Quiz = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [quiz, setQuiz] = useState<IQuiz | null>(null);
   const [roleMember, setRoleMember] =
     useState<IQuiz["community"]["is_joined"]>("NON_MEMBER");
@@ -22,6 +25,8 @@ const Quiz = () => {
     const fetchQuiz = async () => {
       try {
         const res = await getQuiz(id as string);
+         console.log(res)
+
         setQuiz(res);
         setRoleMember(res.community.is_joined);
       } catch (err) {
@@ -58,6 +63,9 @@ const Quiz = () => {
         onJoin={handleJoinCommunity}
       />
       <QuizHeaderDetails quiz={quiz} />
+
+
+
       <QuizCreator creator={quiz.creator} />
       <p className="p-5">{quiz.description}</p>
       <QuizStatsDetail quiz={quiz} />

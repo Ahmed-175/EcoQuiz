@@ -135,3 +135,41 @@ func (h *QuizHandler) GetQuizByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, quiz)
 }
+
+func (h *QuizHandler) GetQuizResult(c *gin.Context) {
+	attemptID := c.Param("id")
+
+	if attemptID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Attempt ID is required"})
+		return
+	}
+
+	result, err := h.quizService.GetQuizResult(c.Request.Context(), attemptID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *QuizHandler) AddQuestion(c *gin.Context) {
+	quizID := c.Param("id")
+	if quizID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Quiz ID is required"})
+		return
+	}
+
+	var qReq dto_quiz.Question
+	if err := c.ShouldBindJSON(&qReq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	if err := h.quizService.AddQuestion(c.Request.Context(), quizID, &qReq); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Question added successfully"})
+}

@@ -149,3 +149,9 @@ export const getCommunityQuizzes = async (
   const response = await api.get(`/communities/${communityId}/quizzes`);
   return response.data.data;
 };
+
+// Get quiz result (detailed breakdown)
+export const getQuizResult = async (attemptId: string): Promise<any> => {
+  const response = await api.get(`/quizzes/attempts/${attemptId}/results`);
+  return response.data;
+};

@@ -37,6 +37,9 @@ type QuizRepo interface {
 	GetQuizLeaderboard(ctx context.Context, quizID string) ([]dto_quiz.LeaderboardEntry, error)
 	IsLike(ctx context.Context, quizID, userId string) (bool, error)
 	FindAttemptsByUserID(ctx context.Context, userID string) ([]dto_quiz.UserAttemptWithQuiz, error)
+	GetUserAnswersForAttempt(ctx context.Context, attemptID string) (map[string]string, error)
+	GetOptionStatsForQuiz(ctx context.Context, quizID string) (map[string]int, error)
+	GetAttemptByID(ctx context.Context, attemptID string) (*models.QuizAttempts, error)
 }
 
 type quizRepo struct {
@@ -84,8 +87,8 @@ func (r *quizRepo) GetAllQuizzes(ctx context.Context) ([]models.Quiz, error) {
 		"description",
 		duration_minutes,
 		likes_count,
-		students_count,
-		average_score,
+		(SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id = quizzes.id AND attempt_number = 1) as students_count,
+		COALESCE((SELECT AVG(percentage) FROM quiz_attempts WHERE quiz_id = quizzes.id AND attempt_number = 1), 0) as average_score,
 		is_published,
 		created_at
 	FROM quizzes
@@ -140,6 +143,8 @@ func (r *quizRepo) FindByID(ctx context.Context, id string) (*models.Quiz, error
 			description,
 			duration_minutes,
 			likes_count,
+			(SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id = $1 AND attempt_number = 1) as students_count,
+			COALESCE((SELECT AVG(percentage) FROM quiz_attempts WHERE quiz_id = $1 AND attempt_number = 1), 0) as average_score,
 			is_published,
 			created_at,
 			updated_at
@@ -157,6 +162,8 @@ func (r *quizRepo) FindByID(ctx context.Context, id string) (*models.Quiz, error
 		&quiz.Description,
 		&quiz.DurationMinutes,
 		&quiz.LikesCount,
+		&quiz.StudentsCount,
+		&quiz.AverageScore,
 		&quiz.IsPublished,
 		&quiz.CreatedAt,
 		&quiz.UpdatedAt,
@@ -224,6 +231,8 @@ func (r *quizRepo) FindByCommunityID(ctx context.Context, communityID string) ([
 			description,
 			duration_minutes,
 			likes_count,
+			(SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id = quizzes.id AND attempt_number = 1) as students_count,
+			COALESCE((SELECT AVG(percentage) FROM quiz_attempts WHERE quiz_id = quizzes.id AND attempt_number = 1), 0) as average_score,
 			is_published,
 			created_at,
 			updated_at
@@ -251,6 +260,8 @@ func (r *quizRepo) FindByCommunityID(ctx context.Context, communityID string) ([
 			&quiz.Description,
 			&quiz.DurationMinutes,
 			&quiz.LikesCount,
+			&quiz.StudentsCount,
+			&quiz.AverageScore,
 			&quiz.IsPublished,
 			&quiz.CreatedAt,
 			&quiz.UpdatedAt,
@@ -531,8 +542,8 @@ func (r *quizRepo) FindQuizzesByCommunityIDWithCount(ctx context.Context, commun
 			q.duration_minutes,
 			q.likes_count,
 			q.created_at,
-			q.students_count,
-			q.average_score,
+			(SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id = q.id AND attempt_number = 1) as students_count,
+			COALESCE((SELECT AVG(percentage) FROM quiz_attempts WHERE quiz_id = q.id AND attempt_number = 1), 0) as average_score,
 			(SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) as number_of_questions,
 			u.id,
 			u.username,
@@ -700,4 +711,65 @@ func (r *quizRepo) FindAttemptsByUserID(ctx context.Context, userID string) ([]d
 	}
 
 	return attempts, nil
+}
+
+func (r *quizRepo) GetUserAnswersForAttempt(ctx context.Context, attemptID string) (map[string]string, error) {
+	query := `SELECT question_id, option_id FROM user_answers WHERE attempt_id = $1`
+	rows, err := r.db.Query(ctx, query, attemptID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	answers := make(map[string]string)
+	for rows.Next() {
+		var qID, oID string
+		if err := rows.Scan(&qID, &oID); err != nil {
+			return nil, err
+		}
+		answers[qID] = oID
+	}
+	return answers, nil
+}
+
+func (r *quizRepo) GetOptionStatsForQuiz(ctx context.Context, quizID string) (map[string]int, error) {
+	query := `
+		SELECT ua.option_id, COUNT(*)
+		FROM user_answers ua
+		JOIN quiz_attempts qa ON ua.attempt_id = qa.id
+		WHERE qa.quiz_id = $1
+		GROUP BY ua.option_id
+	`
+	rows, err := r.db.Query(ctx, query, quizID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	stats := make(map[string]int)
+	for rows.Next() {
+		var oID string
+		var count int
+		if err := rows.Scan(&oID, &count); err != nil {
+			return nil, err
+		}
+		stats[oID] = count
+	}
+	return stats, nil
+}
+
+func (r *quizRepo) GetAttemptByID(ctx context.Context, attemptID string) (*models.QuizAttempts, error) {
+	query := `
+		SELECT id, quiz_id, user_id, score, total_questions, percentage, time_taken_minutes, completed_at
+		FROM quiz_attempts
+		WHERE id = $1
+	`
+	var a models.QuizAttempts
+	err := r.db.QueryRow(ctx, query, attemptID).Scan(
+		&a.ID, &a.QuizID, &a.UserID, &a.Score, &a.TotalQuestions, &a.Percentage, &a.TimeTakenMinutes, &a.CompletedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &a, nil
 }

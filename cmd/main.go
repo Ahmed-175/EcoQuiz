@@ -32,10 +32,10 @@ func main() {
 	commentRepo := repos.NewCommentRepo(pool)
 
 	authService := services.NewAuthService(userRepo, cfg.JwtSecret)
-	userService := services.NewUserService(userRepo ,communityRepo , quizRepo)
+	userService := services.NewUserService(userRepo, communityRepo, quizRepo)
 	oauthCfg := utils.GoogleConfig(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
 	communityService := services.NewCommunityService(communityRepo, userRepo, quizRepo)
-	quizService := services.NewQuizService(quizRepo, questionRepo, optionRepo, userRepo, communityRepo)
+	quizService := services.NewQuizService(quizRepo, questionRepo, optionRepo, userRepo, communityRepo, commentRepo)
 	commentService := services.NewCommentService(commentRepo, questionRepo)
 
 	authHandler := handlers.NewAuthHandler(*authService, oauthCfg, cfg.ClientURL)

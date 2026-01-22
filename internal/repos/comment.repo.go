@@ -2,8 +2,11 @@ package repos
 
 import (
 	"context"
+	dto_quiz "ecoquiz/internal/dto/quiz"
 	"ecoquiz/internal/models"
+	"ecoquiz/internal/utils"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,6 +16,7 @@ type CommentRepo interface {
 	Create(ctx context.Context, comment *models.QuestionComment) error
 	Delete(ctx context.Context, id string) error
 	GetByID(ctx context.Context, id string) (*models.QuestionComment, error)
+	GetCommentsByQuestionID(ctx context.Context, questionID string) ([]dto_quiz.CommentRes, error)
 }
 
 type commentRepo struct {
@@ -67,4 +71,31 @@ func (r *commentRepo) GetByID(ctx context.Context, id string) (*models.QuestionC
 		return nil, errors.New("comment not found")
 	}
 	return &comment, err
+}
+
+func (r *commentRepo) GetCommentsByQuestionID(ctx context.Context, questionID string) ([]dto_quiz.CommentRes, error) {
+	query := `
+		SELECT qc.id, qc.user_id, u.username, u.avatar, qc.comment_text, qc.created_at
+		FROM question_comments qc
+		JOIN users u ON qc.user_id = u.id
+		WHERE qc.question_id = $1
+		ORDER BY qc.created_at ASC
+	`
+	rows, err := r.db.Query(ctx, query, questionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []dto_quiz.CommentRes
+	for rows.Next() {
+		var c dto_quiz.CommentRes
+		var createdAt time.Time
+		if err := rows.Scan(&c.ID, &c.UserID, &c.Username, &c.Avatar, &c.CommentText, &createdAt); err != nil {
+			return nil, err
+		}
+		c.CreatedAt = utils.FormatTime(createdAt)
+		comments = append(comments, c)
+	}
+	return comments, nil
 }
