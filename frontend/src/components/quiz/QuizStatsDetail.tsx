@@ -20,7 +20,7 @@ const QuizStatsDetail = ({ quiz }: QuizStatsProps) => (
         <div className={`w-12 h-12 flex items-center justify-center rounded-xl ${item.color}`}>
           <item.icon className={`text-2xl ${item.iconColor}`} />
         </div>
-        <div className="text-3xl font-extrabold mt-3">{quiz[item.valueKey]}</div>
+        <div className="text-3xl font-extrabold mt-3">{quiz[item.valueKey] as any}</div>
         <div className="text-sm font-semibold text-gray-700">{item.label}</div>
         <div className="text-xs text-gray-500">{item.description}</div>
       </div>
